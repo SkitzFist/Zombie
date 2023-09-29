@@ -8,7 +8,8 @@ SRCS := $(shell find $(SRCDIR) -type f -name '*.cpp')
 OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 
 # Flags
-CFLAGS := -Wall -I include/ -L lib/ -lraylib
+CFLAGS := -Wall -Iinclude/ -Llib/ -g -O0
+LDFLAGS := -lraylib -luser32 -lgdi32 -lwinmm
 WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
 
 # Debug and Release flags
@@ -29,14 +30,13 @@ $(info OBJS is $(OBJS))
 
 # Targets
 desktop: $(OBJS)
-	g++ -o game $^ $(CFLAGS)
+	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS)
 
 web: CC := em++ # set CC to em++ for web build
 web: $(OBJS)
-	em++ -o game.html $^ $(CFLAGS) $(WEBFLAGS)
+	em++ -lembind -o game.html $^ $(CFLAGS) $(LDFLAGS) $(WEBFLAGS)
 
 # Rules
-
 $(OBJDIR): # This is a rule for creating the OBJDIR directory.
 	@mkdir -p $(OBJDIR)
 

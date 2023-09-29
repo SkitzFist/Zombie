@@ -7,8 +7,13 @@ SRCS := $(shell powershell -Command "Get-ChildItem -Recurse -Path $(SRCDIR) -Fil
 OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 
 # Flags
-CFLAGS := -Wall -I include/ -L lib/ -lraylib
-WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -sFULL_ES2 -sFORCE_FILESYSTEM
+CFLAGS := -Wall -Iinclude/ -Llib/ -g -O0
+LDFLAGS := -lraylib
+WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+
+ifeq ($(OS),Windows_NT)
+	LDFLAGS += -lwinmm -lgdi32 -luser32
+endif
 
 # Debug and Release flags
 DEBUGFLAGS := -g -O0
@@ -28,11 +33,11 @@ $(info OBJS is $(OBJS))
 
 # Targets
 desktop: $(OBJS)
-	g++ -o game $^ $(CFLAGS)
+	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS)
 
 web: CC := em++ # set CC to em++ for web build
 web: $(OBJS)
-	em++ -o game.html $^ $(CFLAGS) $(WEBFLAGS)
+	em++ -lembind -o game.html $^ $(CFLAGS) $(WEBFLAGS)
 
 # Rules
 $(OBJDIR)%.o : $(SRCDIR)%.cpp
