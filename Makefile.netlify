@@ -31,9 +31,6 @@ else
 	CFLAGS += $(RELEASEFLAGS)
 endif
 
-$(info SRCS is $(SRCS))
-$(info OBJS is $(OBJS))
-
 # Targets
 desktop: LDFLAGS := -L$(DESKTOP_LIB_DIR) -lraylib
 desktop: $(OBJS)
@@ -50,7 +47,6 @@ $(OBJDIR): # This is a rule for creating the OBJDIR directory.
 	@mkdir -p $(OBJDIR)
 
 $(OBJDIR)%.o : $(SRCDIR)%.cpp | $(OBJDIR)
-	$(info compiling to .o)
 	$(info Compiling $< into $@)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
