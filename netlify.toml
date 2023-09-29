@@ -1,0 +1,2 @@
+[build]
+  command = "./install_emscripten.sh && make web"
