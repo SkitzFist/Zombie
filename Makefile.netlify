@@ -1,0 +1,49 @@
+CC := g++
+
+OBJDIR := obj/
+SRCDIR := src/
+
+# Use find command to get all the .cpp files
+SRCS := $(shell find $(SRCDIR) -type f -name '*.cpp')
+OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
+
+# Flags
+CFLAGS := -Wall -I include/ -L lib/ -lraylib
+WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+
+# Debug and Release flags
+DEBUGFLAGS := -g -O0
+RELEASEFLAGS := -O3
+
+# Default to Debug build
+BUILD := DEBUG
+
+ifeq ($(BUILD), DEBUG)
+	CFLAGS += $(DEBUGFLAGS)
+else
+	CFLAGS += $(RELEASEFLAGS)
+endif
+
+$(info SRCS is $(SRCS))
+$(info OBJS is $(OBJS))
+
+# Targets
+desktop: $(OBJS)
+	g++ -o game $^ $(CFLAGS)
+
+web: CC := em++ # set CC to em++ for web build
+web: $(OBJS)
+	em++ -o game.html $^ $(CFLAGS) $(WEBFLAGS)
+
+# Rules
+$(OBJDIR)%.o : $(SRCDIR)%.cpp
+	$(info compiling to .o)
+	$(info Compiling $< into $@)
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+clean:
+	@rm -f $(OBJDIR)*.o
+	@rm -f *.js
+	@rm -f *.wasm
+	@rm -f *.html
+	@rm -f *.exe
