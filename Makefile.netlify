@@ -2,6 +2,8 @@ CC := g++
 
 OBJDIR := obj/
 SRCDIR := src/
+WEB_LIB_DIR := lib/web
+DESKTOP_LIB_DIR := lib/desktop
 
 # Use find command to get all the .cpp files
 SRCS := $(shell find $(SRCDIR) -type f -name '*.cpp')
@@ -29,12 +31,15 @@ $(info SRCS is $(SRCS))
 $(info OBJS is $(OBJS))
 
 # Targets
+desktop: LDFLAGS := -L$(DESKTOP_LIB_DIR) -lraylib
 desktop: $(OBJS)
-	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS)
+	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS) $(WINDOWS_LIBS)
 
+web: LDFLAGS := -L$(WEB_LIB_DIR) -lraylib # override LDFLAGS for web build
 web: CC := em++ # set CC to em++ for web build
 web: $(OBJS)
-	em++ -lembind -o game.html $^ $(CFLAGS) $(LDFLAGS) $(WEBFLAGS)
+	em++ -o game.html $^ $(CFLAGS) $(LDFLAGS) $(WEBFLAGS) -lembind
+
 
 # Rules
 $(OBJDIR): # This is a rule for creating the OBJDIR directory.
