@@ -1,2 +1,2 @@
 [build]
-  command = "chmod +x ./install_emscripten.sh && ./install_emscripten.sh && make -f Makefile.netlify web"
+chmod +x ./install_emscripten.sh && ./install_emscripten.sh && source /opt/build/repo/emsdk/emsdk_env.sh && make -f Makefile.netlify web
