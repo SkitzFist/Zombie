@@ -10,9 +10,13 @@ SRCS := $(shell find $(SRCDIR) -type f -name '*.cpp')
 OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 
 # Flags
-CFLAGS := -Wall -Iinclude/ -Llib/ -g -O0
-LDFLAGS := -lraylib -luser32 -lgdi32 -lwinmm
+CFLAGS := -Wall -Iinclude/ -g -O0
+LDFLAGS := -lraylib
 WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+
+ifeq ($(OS),Windows_NT)
+	WINDOWS_LIBS := -lwinmm -lgdi32 -luser32
+endif
 
 # Debug and Release flags
 DEBUGFLAGS := -g -O0

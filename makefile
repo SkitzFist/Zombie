@@ -9,7 +9,7 @@ SRCS := $(shell powershell -Command "Get-ChildItem -Recurse -Path $(SRCDIR) -Fil
 OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 
 # Flags
-CFLAGS := -Wall -Iinclude/ -Llib/ -g -O0
+CFLAGS := -Wall -Iinclude/ -g -O0
 LDFLAGS := -lraylib
 WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
 
