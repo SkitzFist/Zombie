@@ -36,7 +36,11 @@ web: $(OBJS)
 	em++ -o game.html $^ $(CFLAGS) $(WEBFLAGS)
 
 # Rules
-$(OBJDIR)%.o : $(SRCDIR)%.cpp
+
+$(OBJDIR): # This is a rule for creating the OBJDIR directory.
+	@mkdir -p $(OBJDIR)
+
+$(OBJDIR)%.o : $(SRCDIR)%.cpp | $(OBJDIR)
 	$(info compiling to .o)
 	$(info Compiling $< into $@)
 	$(CC) -o $@ -c $< $(CFLAGS)
