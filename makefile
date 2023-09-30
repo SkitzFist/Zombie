@@ -55,5 +55,5 @@ clean:
 	@powershell Remove-Item $(OBJDIR)*.o -Force
 	@powershell Remove-Item *.js -Force
 	@powershell Remove-Item *.wasm -Force
-	@powershell Remove-Item *.html -Force
+	@powershell Remove-Item game.html -Force
 	@powershell Remove-Item *.exe -Force

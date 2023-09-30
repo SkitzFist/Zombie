@@ -54,5 +54,5 @@ clean:
 	@rm -f $(OBJDIR)*.o
 	@rm -f *.js
 	@rm -f *.wasm
-	@rm -f *.html
+	@rm -f game.html
 	@rm -f *.exe
