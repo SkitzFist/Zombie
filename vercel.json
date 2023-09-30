@@ -1,5 +1,5 @@
 {
     "version": 2,
     "name": "Zombie",
-    "builds": [{ "src": "index.html", "use": "@vercel/static" }]
+    "builds": [{ "src": "game.html", "use": "@vercel/static" }]
   }

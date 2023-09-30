@@ -32,3 +32,5 @@
 *.app
 #*.wasm
 #*.html
+
+.vercel
