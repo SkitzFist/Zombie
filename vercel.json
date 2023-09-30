@@ -1,5 +1,8 @@
 {
     "version": 2,
     "name": "Zombie",
-    "builds": [{ "src": "game.html", "use": "@vercel/static" }]
-  }
+    "builds": [{ "src": "index.html", "use": "@vercel/static" }],
+    "routes": [
+        { "src": "/(.*\\.(js|wasm|html))$", "dest": "/$1" }
+    ] 
+ }
