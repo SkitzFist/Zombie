@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Download and extract xz utility
-curl -L -o xz.tar.gz https://tukaani.org/xz/xz-5.2.5-linux.tar.gz
-tar -xzf xz.tar.gz
-# List the contents of the directory
-ls -la $(pwd)/xz-5.2.5-linux/bin
-# Give execution permissions to the binaries
-chmod +x $(pwd)/xz-5.2.5-linux/bin/*
-export PATH=$(pwd)/xz-5.2.5-linux/bin:$PATH
+# Download and compile xz utility
+curl -O https://tukaani.org/xz/xz-5.2.5.tar.gz
+tar -xzf xz-5.2.5.tar.gz
+cd xz-5.2.5
+./configure
+make
+cd ..
+export PATH=$(pwd)/xz-5.2.5/src/xz:$PATH
 
 # Download and install Emscripten SDK
 git clone https://github.com/emscripten-core/emsdk.git
