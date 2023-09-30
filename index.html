@@ -1,11 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%; margin: 0; padding: 0;">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game</title>
+    <style>
+        /* Reset default margin and padding */
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            /* Make html and body take the full height of the viewport */
+            height: 100%;
+            overflow: hidden; /* Hide scrollbars */
+        }
+
+        iframe {
+            display: block; /* Remove space below iframe */
+            width: 100%;
+            height: 100%;
+            border: none; /* Remove border */
+        }
+    </style>
 </head>
+
 <body>
-    <iframe src="game.html" width="100%" height="100%" frameborder="0"></iframe>
+    <iframe src="game.html"></iframe>
 </body>
+
 </html>
