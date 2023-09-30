@@ -2,7 +2,5 @@
     "version": 2,
     "name": "Zombie",
     "builds": [{ "src": "server.js", "use": "@vercel/node" }],
-    "routes": [
-        { "src": "/(.*)", "dest": "/index.html" }
-      ]
+    "routes": [{ "src": "/(.*)", "dest": "/public/$1" }]
  }
