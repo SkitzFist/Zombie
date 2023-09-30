@@ -1,8 +1,5 @@
 {
     "version": 2,
     "name": "Zombie",
-    "builds": [{ "src": "index.html", "use": "@vercel/static" }],
-    "routes": [
-        { "src": "/(.*\\.(js|wasm|html))$", "dest": "/$1" }
-    ] 
+    "builds": [{ "src": "package.json", "use": "@vercel/node" }]
  }
