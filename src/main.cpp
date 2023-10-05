@@ -5,7 +5,6 @@
 #endif
 
 #include "Game.hpp"
-#include "Log.hpp"
 
 inline Game game;
 
@@ -15,7 +14,6 @@ int main(){
 
 
     #if PLATFORM_WEB
-        Log::info("Test");
        emscripten_set_main_loop(run, 0, 1);
     #else
         game.run();
@@ -25,7 +23,8 @@ int main(){
 }
 
 inline void run(){
-    game.webRun();    
+    game.webRun();
+    destroy();
 }
 
 inline void destroy(){
