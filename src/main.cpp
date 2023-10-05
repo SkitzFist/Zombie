@@ -1,9 +1,11 @@
 #include "../include/raylib.h"
+
 #ifdef PLATFORM_WEB
 #include <emscripten.h>
 #endif
 
 #include "Game.hpp"
+#include "Log.hpp"
 
 inline Game game;
 
@@ -13,16 +15,17 @@ int main(){
 
 
     #if PLATFORM_WEB
+        Log::info("Test");
        emscripten_set_main_loop(run, 0, 1);
     #else
-        run();
+        game.run();
         CloseWindow();
         return 0;
     #endif
 }
 
 inline void run(){
-    game.run();    
+    game.webRun();    
 }
 
 inline void destroy(){

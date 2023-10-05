@@ -4,9 +4,10 @@
 #include <string>
 #include "raylib.h"
 
-
-inline void logInfo(const std::string& log){
-    TraceLog(LOG_INFO, log.c_str());
+namespace Log{
+    inline void info(const std::string& log){
+        TraceLog(LOG_INFO, log.c_str());
+    }
 }
 
 #endif

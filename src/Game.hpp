@@ -9,10 +9,11 @@ public:
     ~Game();
 
     void run();
+    void webRun();
 private:
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
-    void handleRenderSystems();
+    void handleRenderSystems() const;
 };
 
 #endif

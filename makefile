@@ -36,10 +36,12 @@ desktop: LDFLAGS := -L$(DESKTOP_LIB_DIR) -lraylib
 desktop: $(OBJS)
 	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS) $(WINDOWS_LIBS)
 
-web: LDFLAGS := -L$(WEB_LIB_DIR) -lraylib # override LDFLAGS for web build
+
 web: CC := em++ # set CC to em++ for web build
+web: CFLAGS += -DPLATFORM_WEB # add -DPLATFORM_WEB to CFLAGS for web build
+web: LDFLAGS := -L$(WEB_LIB_DIR) -lraylib $(WEBFLAGS) # add WEBFLAGS to LDFLAGS for web build
 web: $(OBJS)
-	em++ -o game.html $^ $(CFLAGS) $(LDFLAGS) $(WEBFLAGS) -lembind
+	em++ -o game.html $^ $(CFLAGS) $(LDFLAGS) -lembind
 
 # Rules
 $(OBJDIR)%.o : $(SRCDIR)%.cpp
