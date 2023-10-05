@@ -11,7 +11,7 @@ OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 # Flags
 CFLAGS := -Wall -Iinclude/ -g -O0
 LDFLAGS := -lraylib
-WEBFLAGS := -DPLATFORM_WEB -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+WEBFLAGS := -DPLATFORM_WEB -s ASYNCIFY -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
 
 # If on Windows, add specific flags
 ifeq ($(OS),Windows_NT)
@@ -31,29 +31,25 @@ else
 	CFLAGS += $(RELEASEFLAGS)
 endif
 
-$(info SRCS is $(SRCS))
-$(info OBJS is $(OBJS))
-
 # Targets
 desktop: LDFLAGS := -L$(DESKTOP_LIB_DIR) -lraylib
 desktop: $(OBJS)
 	$(CC) -o game $^ $(CFLAGS) $(LDFLAGS) $(WINDOWS_LIBS)
 
-web: LDFLAGS := -L$(WEB_LIB_DIR) -lraylib # override LDFLAGS for web build
+
 web: CC := em++ # set CC to em++ for web build
+web: CFLAGS += -DPLATFORM_WEB # add -DPLATFORM_WEB to CFLAGS for web build
+web: LDFLAGS := -L$(WEB_LIB_DIR) -lraylib $(WEBFLAGS) # add WEBFLAGS to LDFLAGS for web build
 web: $(OBJS)
-	em++ -o game.html $^ $(CFLAGS) $(LDFLAGS) $(WEBFLAGS) -lembind
+	em++ -o game.html $^ $(CFLAGS) $(LDFLAGS) -lembind
 
 # Rules
 $(OBJDIR)%.o : $(SRCDIR)%.cpp
-	$(info $(CC) compiling to .o)
-	$(info $(CC) Compiling $< into $@)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-clean:
-	@powershell Remove-Item $(OBJDIR)*.o -Force
-	@powershell Remove-Item *.js -Force
-	@powershell Remove-Item *.wasm -Force
-	@powershell Remove-Item game.html -Force
-	@powershell Remove-Item *.exe -Force
+	@powershell if (Test-Path $(OBJDIR)*.o) { Remove-Item $(OBJDIR)*.o -Force }
+	@powershell if (Test-Path *.exe) { Remove-Item *.exe -Force }
+	@powershell if (Test-Path *.js) { Remove-Item *.js -Force }
+	@powershell if (Test-Path *.wasm) { Remove-Item *.wasm -Force }
+	@powershell if (Test-Path game.html) { Remove-Item game.html -Force }
