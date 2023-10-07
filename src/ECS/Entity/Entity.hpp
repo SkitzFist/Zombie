@@ -3,12 +3,11 @@
 
 struct Entity
 {
-    int id;
+    unsigned int id;
     
-    Entity(int id){
+    Entity(unsigned int id){
         this->id = id;
     }   
 };
-
 
 #endif

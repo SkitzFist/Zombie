@@ -11,7 +11,7 @@ OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 # Flags
 CFLAGS := -Wall -Iinclude/ -g -O0
 LDFLAGS := -lraylib
-WEBFLAGS := -DPLATFORM_WEB -s ASYNCIFY -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+WEBFLAGS := -DPLATFORM_WEB -s ALLOW_MEMORY_GROWTH=1 -s ASYNCIFY -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
 
 # If on Windows, add specific flags
 ifeq ($(OS),Windows_NT)
@@ -19,7 +19,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 # Debug and Release flags
-DEBUGFLAGS := -g -O0
+DEBUGFLAGS := -g -O0 -DDEBUG
 RELEASEFLAGS := -O3
 
 # Default to Debug build
