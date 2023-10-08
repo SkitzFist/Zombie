@@ -44,7 +44,7 @@ void removeComponent(unsigned const int entityID){
     }
 }
 
-    const bool hasEntity(unsigned const int entityID){
+    const bool hasEntity(unsigned const int entityID)const{
         return m_sparseMap.find(entityID) != m_sparseMap.end();
     }
 
@@ -52,11 +52,21 @@ void removeComponent(unsigned const int entityID){
         return m_denseArray.colors.size();
     }
 
-    /*
-    const CircleShapeComponents& getAllComponents() const;
-    CircleShapeComponents& getAllcomponents();
-    unsigned int getDenseIndexForEntity(unsigned int id) const;
-    */
+    const CircleShapeComponent& getAllComponents() const{
+        return m_denseArray;
+    }
+
+    CircleShapeComponent& getAllcomponents(){
+        return m_denseArray;
+    }
+
+    unsigned int getDenseIndexForEntity(unsigned int entityID) const{
+        if(!hasEntity(entityID)){
+            return -1;
+        }
+
+        return m_sparseMap.at(entityID);
+    }
 
 private:
     std::unordered_map<unsigned int, unsigned int> m_sparseMap;

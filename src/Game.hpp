@@ -8,7 +8,7 @@
 
 class Game{
 public:
-    Game();
+    Game(int screenWidth, int screenHeight, bool isFullscreen);
     ~Game();
 
     void init();
@@ -16,14 +16,18 @@ public:
     void run();
     void webRun();
 private:
-    void handleInputSystems();
-    void handleUpdateSystems(const float dt);
-    void handleRenderSystems() const;
     unsigned int nrOfEntities;
     std::vector<Entity> entities;
     CircleShapeComponents circleShapeComponents;
-    unsigned int index;
     unsigned int indexUpdate;
+
+    void handleInputSystems();
+    void handleUpdateSystems(const float dt);
+    void handleRenderSystems();
+
+    void initiateEntities();
+    
+    void drawUi();
 };
 
 #endif
