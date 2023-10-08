@@ -12,14 +12,14 @@ OBJS := $(patsubst $(SRCDIR)%.cpp,$(OBJDIR)%.o,$(SRCS))
 # Flags
 CFLAGS := -Wall -Iinclude/ -g -O0
 LDFLAGS := -lraylib
-WEBFLAGS := -DPLATFORM_WEB -s ASYNCIFY -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
+WEBFLAGS := -DPLATFORM_WEB -s ALLOW_MEMORY_GROWTH=1 -s ASYNCIFY -s USE_GLFW=3 -s FULL_ES2 -s FORCE_FILESYSTEM
 
 ifeq ($(OS),Windows_NT)
 	WINDOWS_LIBS := -lwinmm -lgdi32 -luser32
 endif
 
 # Debug and Release flags
-DEBUGFLAGS := -g -O0
+DEBUGFLAGS := -g -O0 -DDEBUG
 RELEASEFLAGS := -O3
 
 # Default to Debug build
@@ -47,7 +47,6 @@ $(OBJDIR): # This is a rule for creating the OBJDIR directory.
 	@mkdir -p $(OBJDIR)
 
 $(OBJDIR)%.o : $(SRCDIR)%.cpp | $(OBJDIR)
-	$(info Compiling $< into $@)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
