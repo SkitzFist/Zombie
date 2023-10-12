@@ -34,7 +34,9 @@ int main(){
 }
 
 inline Game& getGameInstance() {
-    static Game gameInstance(800,600, false);
+    constexpr const int screenWidth = 800;
+    constexpr const int screenHeight = 600;
+    static Game gameInstance(screenWidth,screenHeight, false);
     return gameInstance;
 }
 

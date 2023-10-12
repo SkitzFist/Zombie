@@ -5,6 +5,7 @@
 
 #include "../include/raylib.h"
 #include "ECS/Component/CircleShapeComponent.hpp"
+#include "CameraInput.hpp"
 
 class Game{
 public:
@@ -15,11 +16,14 @@ public:
 
     void run();
     void webRun();
+
 private:
-    unsigned int nrOfEntities;
-    std::vector<Entity> entities;
+    unsigned int m_nrOfEntities;
+    std::vector<Entity> m_entities;
     CircleShapeComponents circleShapeComponents;
-    unsigned int indexUpdate;
+    unsigned int m_indexUpdate;
+    Camera2D m_camera;
+    CameraInput m_cameraInput;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
@@ -27,7 +31,8 @@ private:
 
     void initiateEntities();
     
-    void drawUi();
+    void drawUi() const;
+    void drawGrid() const; //debug, should be its own system
 };
 
 #endif
