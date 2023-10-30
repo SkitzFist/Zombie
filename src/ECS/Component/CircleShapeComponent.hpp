@@ -5,7 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include "../../../include/raylib.h"
+#include "raylib.h"
 #include "../Entity/Entity.hpp"
 
 struct CircleShapeComponent

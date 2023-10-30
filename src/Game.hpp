@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../include/raylib.h"
+#include "raylib.h"
 #include "ECS/Component/CircleShapeComponent.hpp"
 #include "CameraInput.hpp"
 
