@@ -1,4 +1,4 @@
-#include "../include/raylib.h"
+#include "raylib.h"
 
 #ifdef PLATFORM_WEB
 #include <emscripten.h>

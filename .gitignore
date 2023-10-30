@@ -34,3 +34,6 @@
 #*.html
 
 .vercel
+
+build/
+build_web/

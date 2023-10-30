@@ -1,7 +1,7 @@
 #ifndef _CameraInput
 #define _CameraInput
 
-#include "../include/raylib.h"
+#include "raylib.h"
 
 class CameraInput{
 public:
