@@ -8,9 +8,7 @@
 #include <string>
 #include <cmath>
 
-Game::Game(int screenWidth, int screenHeight, bool isFullscreen):
-    m_nrOfEntities(10000000), 
-    m_indexUpdate(0), 
+Game::Game(int screenWidth, int screenHeight, bool isFullscreen): 
     m_camera({0}){
     #if PLATFORM_WEB
         InitWindow(screenWidth, screenHeight, "Zombie");
@@ -24,8 +22,6 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen):
         Vector2 windowPos = GetWindowPosition();
         windowPos.y += 30;
         SetWindowPosition(windowPos.x, windowPos.y);
-
-        m_entities.reserve(m_nrOfEntities);
     #endif
 
     SetTargetFPS(144);
@@ -60,15 +56,11 @@ void Game::webRun(){
 }
 
 void Game::handleInputSystems(){
-    
     m_cameraInput.handleInput(m_camera);
 }
 
 void Game::handleUpdateSystems(float dt){
-    if(m_entities.size() < m_nrOfEntities){
-        initiateEntities();
-        return;
-    }
+
 }
 
 void Game::handleRenderSystems(){
@@ -83,16 +75,6 @@ void Game::handleRenderSystems(){
         drawUi(); // last
     EndDrawing();
 }
-
-void Game::initiateEntities(){
-    unsigned int chunkSize = 10000;
-    unsigned int chunk = m_indexUpdate + chunkSize;
-    for(;m_indexUpdate < chunk && m_indexUpdate < m_nrOfEntities; ++m_indexUpdate){
-        m_entities.emplace_back(Entity(m_indexUpdate));
-        circleShapeComponents.insertComponent(m_entities[m_indexUpdate].id, YELLOW);
-    }
-}
-
 
 void Game::drawUi()const{
     std::string fpsStr = std::to_string(GetFPS());
