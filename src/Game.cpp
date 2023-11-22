@@ -9,7 +9,7 @@
 #include <cmath>
 
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen): 
-    m_camera({0}){
+    m_camera(){
     #if PLATFORM_WEB
         InitWindow(screenWidth, screenHeight, "Zombie");
     #else
