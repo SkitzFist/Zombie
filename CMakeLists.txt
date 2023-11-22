@@ -18,8 +18,19 @@ else()
   set(PLATFORM Desktop CACHE STRING "" FORCE)
 endif()
 
-FetchContent_Declare(raylib GIT_REPOSITORY https://github.com/raysan5/raylib.git GIT_TAG master)
+FetchContent_Declare(
+  raylib 
+  GIT_REPOSITORY https://github.com/raysan5/raylib.git 
+  GIT_TAG master)
 FetchContent_MakeAvailable(raylib)
+
+# Adding EnTT
+FetchContent_Declare(
+    entt
+    GIT_REPOSITORY https://github.com/skypjack/entt.git
+    GIT_TAG master # or a specific version tag like v3.8.0
+)
+FetchContent_MakeAvailable(entt)
 
 # Adding our source files
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
@@ -30,6 +41,11 @@ add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
+# Link against raylib
+target_link_libraries(${PROJECT_NAME} raylib)
+# Link against ENTT
+target_link_libraries(${PROJECT_NAME} EnTT::EnTT)
+
 # Specify C and C++ compilers for the desktop target
 if(NOT EMSCRIPTEN)
   set(CMAKE_SYSTEM_NAME Windows)
@@ -37,9 +53,6 @@ if(NOT EMSCRIPTEN)
   set(CMAKE_CXX_COMPILER clang++)
   set(CMAKE_MAKE_PROGRAM mingw32-make)
 endif()
-
-# Link against raylib
-target_link_libraries(${PROJECT_NAME} raylib)
 
 # Platform-specific options
 if(EMSCRIPTEN)
