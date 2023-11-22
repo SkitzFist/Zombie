@@ -7,6 +7,7 @@
 #include "Timer.hpp"
 #include <string>
 #include <cmath>
+#include "PositionComponent.hpp"
 
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen): 
     m_camera(){
@@ -25,13 +26,19 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen):
     #endif
 
     SetTargetFPS(144);
+    SetExitKey(KEY_ESCAPE);
 
     m_camera.offset = {0,0};
     m_camera.target = {0,0};
     m_camera.rotation = 0.f;
     m_camera.zoom = 1.f;
 
-    SetExitKey(KEY_ESCAPE);
+    for(int i = 0; i < 100; ++i){
+        auto entity = m_registry.create();
+        float posX = (float)GetRandomValue(0, World::WIDTH);
+        float posY = (float)GetRandomValue(0, World::HEIGHT);
+        m_registry.emplace<PositionComponent>(entity, Vector2{posX, posY});
+    }
 }   
 
 Game::~Game(){
@@ -68,6 +75,7 @@ void Game::handleRenderSystems(){
 
     BeginDrawing();
         BeginMode2D(m_camera);
+            drawZombies();
             drawGrid();
         EndMode2D();
 
@@ -76,9 +84,12 @@ void Game::handleRenderSystems(){
     EndDrawing();
 }
 
-void Game::drawUi()const{
-    std::string fpsStr = std::to_string(GetFPS());
-    DrawText(fpsStr.c_str(), 10, 10, 20, WHITE);
+void Game::drawZombies(){
+    auto view = m_registry.view<const PositionComponent>();
+
+    view.each([](const auto &pos) { 
+        DrawCircle(pos.position.x, pos.position.y, 5.f, GREEN);
+    });
 }
 
 void Game::drawGrid()const{
@@ -93,4 +104,9 @@ void Game::drawGrid()const{
     for(int i = 0; i <= World::HEIGHT; i+= World::TILE_SIZE){
         DrawLine(0, i, World::WIDTH, i, color);
     }
+}
+
+void Game::drawUi()const{
+    std::string fpsStr = std::to_string(GetFPS());
+    DrawText(fpsStr.c_str(), 10, 10, 20, WHITE);
 }
