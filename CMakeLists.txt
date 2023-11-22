@@ -49,6 +49,9 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /O2)
   else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O2)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+    LINK_FLAGS "-lwinmm -lgdi32 -luser32"
+)
   endif()
 endif()
 

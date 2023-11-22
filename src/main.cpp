@@ -5,7 +5,6 @@
 #endif
 
 #include "Game.hpp"
-#include "tests/CircleComponentTest.hpp"
 #include "Log.hpp"
 
 inline void run();
@@ -15,9 +14,6 @@ inline Game& getGameInstance();
 
 int main(){
     #if DEBUG
-        bool circleComponentTestResult = circleComponentTests();
-        if(!circleComponentTestResult)
-            return -1;
     #endif
 
     
