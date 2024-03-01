@@ -50,7 +50,7 @@ target_link_libraries(${PROJECT_NAME} EnTT::EnTT)
 if(NOT EMSCRIPTEN)
   set(CMAKE_SYSTEM_NAME Windows)
   set(CMAKE_C_COMPILER gcc)
-  set(CMAKE_CXX_COMPILER clang++)
+  set(CMAKE_CXX_COMPILER g++)
   set(CMAKE_MAKE_PROGRAM mingw32-make)
 endif()
 

@@ -20,8 +20,8 @@ int main(){
     #if PLATFORM_WEB
         emscripten_set_main_loop(run, 0, 1);
     #else
-        int screenWidth = 1280;
-        int screenHeight = 720;
+        int screenWidth = 1920 * 2;
+        int screenHeight = 1280 * 2;
         Game game(screenWidth, screenHeight, false);
         game.run();
         CloseWindow();
@@ -38,6 +38,7 @@ inline Game& getGameInstance() {
 
 inline void run(){
     getGameInstance().webRun();
+    destroy();
 }
 inline void destroy(){
     #if PLATFORM_WEB
