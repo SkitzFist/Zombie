@@ -5,11 +5,11 @@
     #include "Log.hpp"
 
     CameraInput::CameraInput():
-        m_speed(500),
+        m_speed(1000),
         m_minSpeed(1), 
-        m_maxSpeed(4),
+        m_maxSpeed(50),
         m_maxZoom(3.f),
-        m_minZoom(1.f){
+        m_minZoom(0.01f){
         
     }
 

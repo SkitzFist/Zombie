@@ -1,12 +1,11 @@
 #ifndef _Game
 #define _Game
 
-#include <vector>
-
 #include "raylib.h"
-#include "entt/entt.hpp"
-#include "CameraInput.hpp"
 #include "World.hpp"
+#include "CameraInput.hpp"
+#include "PositionComponent.h"
+#include "QuadTree.h"
 
 class Game{
 public:
@@ -22,20 +21,23 @@ private:
     WorldBounds m_world;
     Camera2D m_camera;
     CameraInput m_cameraInput;
-
-    entt::registry m_registry;
+    QuadTree m_tree;
+    //std::vector<Entity> m_entities;
+    PositionComponent positionComponent;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
     void handleRenderSystems();
-
-    void initiateEntities();
     
-    void updateZombies();
-
-    void drawZombies();
     void drawGrid() const; //debug, should be its own system
     void drawUi() const;
+    void drawZombie() const;
+
+    //debug
+    Rectangle getCameraRect() const;
+
+    int currentIndex = 0;
+    int maxBatchSize = 10000;
 };
 
 #endif

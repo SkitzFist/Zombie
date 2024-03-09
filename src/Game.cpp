@@ -1,18 +1,28 @@
 #include "Game.hpp"
 
 #include "World.hpp"
+#include "ComponentTypes.h"
+#include "Entity.h"
+#include "CollisionDetection.h"
 
 //debug
 #include "Log.hpp"
 #include "Timer.hpp"
 #include <string>
 #include <cmath>
-#include "PositionComponent.hpp"
-#include "VelocityComponent.h"
 #include "MathHack.hpp"
 
+inline constexpr const int MAX_ENTITIES = 100;
+
+Rectangle a1 {0,0, 30, 30};
+
+inline constexpr const float ZOMBIE_RADIUS = 15;
+inline constexpr const float WORLD_SCALE = 1;
+
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen): 
-    m_camera(){
+    m_camera(), 
+    m_tree(0, {0,0,screenWidth * WORLD_SCALE, screenHeight * WORLD_SCALE}){
+
     #if PLATFORM_WEB
         InitWindow(screenWidth, screenHeight, "Zombie");
     #else
@@ -27,27 +37,17 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen):
         SetWindowPosition(windowPos.x, windowPos.y);
     #endif
 
-    m_world.width = screenWidth;
-    m_world.height = screenHeight;
-    m_world.tileSize = 40;
+    m_world.width = screenWidth  * WORLD_SCALE;
+    m_world.height = screenHeight * WORLD_SCALE;
+    m_world.tileSize = 32;
 
-    SetTargetFPS(144);
+    SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
 
     m_camera.offset = {0,0};
     m_camera.target = {0,0};
     m_camera.rotation = 0.f;
     m_camera.zoom = 1.f;
-
-    for(int i = 0; i < 100; ++i){
-        auto entity = m_registry.create();
-        float posX = (float)GetRandomValue(0, m_world.width);
-        float posY = (float)GetRandomValue(0, m_world.height);
-        m_registry.emplace<PositionComponent>(entity, Vector2{posX, posY});
-        float randomAccX = GetRandomValue(-100, 100) / 100.f;
-        float randomAccY = GetRandomValue(-100, 100) / 100.f;
-        m_registry.emplace<VelocityComponent>(entity, Vector2{0,0,}, Vector2{randomAccX, randomAccY});
-    }
 }   
 
 Game::~Game(){
@@ -73,48 +73,44 @@ void Game::webRun(){
 
 void Game::handleInputSystems(){
     m_cameraInput.handleInput(m_camera);
+
+    Vector2 mousePos = GetMousePosition();
+
+    a1.x = mousePos.x;
+    a1.y = mousePos.y;
 }
 
 void Game::handleUpdateSystems(float dt){
     (void)dt;
+    
+    if(currentIndex == MAX_ENTITIES){
+        return;
+    }
 
-    updateZombies();
+    int maxBatch = currentIndex + maxBatchSize;
+    if(maxBatch >= MAX_ENTITIES){
+        maxBatch = MAX_ENTITIES - 1;
+    }
+    for(; currentIndex < maxBatch; ++currentIndex){
+        Entity entity(currentIndex);
+        
+        entity.addComponent(ComponentTypes::POSITION);
+        float randX = GetRandomValue(0, m_world.width);
+        float randY = GetRandomValue(0, m_world.height);
+        positionComponent.add(randX, randY, entity.id);
+        m_tree.add(entity, {
+            randX - ZOMBIE_RADIUS, randY - ZOMBIE_RADIUS,
+            ZOMBIE_RADIUS * 2, ZOMBIE_RADIUS * 2
+        });
+        //m_entities.push_back(entity);
+    }
 }
 
-void Game::updateZombies(){
-    auto view = m_registry.view<PositionComponent, VelocityComponent>();
-    auto& world = m_world;
-    
-    view.each([world](PositionComponent& pos, VelocityComponent& v){
-        //update velocity
-        v.velocity.x += v.acceleration.x; 
-        v.velocity.y += v.acceleration.y;
 
-        constexpr const float MAX_SPEED = 500.f;
-
-        MathHack::clamp(v.velocity.x, -MAX_SPEED, MAX_SPEED);
-        MathHack::clamp(v.velocity.y, -MAX_SPEED, MAX_SPEED);
-        
-        //update position
-        pos.position.x += v.velocity.x * GetFrameTime();
-        pos.position.y += v.velocity.y * GetFrameTime();
-
-        if(pos.position.x > world.width){
-            pos.position.x = 0.f;
-        }else if(pos.position.x < 0.f){
-            pos.position.x = world.width;
-        }
-
-        if(pos.position.y > world.height){
-            pos.position.y = 0.f;
-        }else if(pos.position.y < 0.f){
-            pos.position.y = world.height;
-        }
-        
-        //damp acceleration
-        //v.acceleration.x *= 0.99;
-        //v.acceleration.y *= 0.99;
-    });
+Rectangle Game::getCameraRect()const{
+    Vector2 cameraPos = m_camera.target; //GetScreenToWorld2D(m_camera.target, m_camera);
+    Vector2 size = {GetScreenWidth() / m_camera.zoom, GetScreenHeight() / m_camera.zoom};
+    return {cameraPos.x, cameraPos.y, size.x, size.y};
 }
 
 void Game::handleRenderSystems(){
@@ -122,20 +118,17 @@ void Game::handleRenderSystems(){
 
     BeginDrawing();
         BeginMode2D(m_camera);
-            drawZombies();
             drawGrid();
+            drawZombie();
+
+            //camera test
+            //Rectangle cameraRect = getCameraRect();
+            //DrawRectangleLines(cameraRect.x, cameraRect.y, cameraRect.width, cameraRect.height, YELLOW);
         EndMode2D();
-
+        
         drawUi(); // last
+        DrawRectangleLines(a1.x, a1.y, a1.width, a1.height, YELLOW);
     EndDrawing();
-}
-
-void Game::drawZombies(){
-    auto view = m_registry.view<const PositionComponent>();
-
-    view.each([](const auto &pos) { 
-        DrawCircle(pos.position.x, pos.position.y, 10.f, GREEN);
-    });
 }
 
 void Game::drawGrid()const{
@@ -152,7 +145,38 @@ void Game::drawGrid()const{
     }
 }
 
+int drawnCount = 0;
 void Game::drawUi()const{
     std::string fpsStr = std::to_string(GetFPS());
-    DrawText(fpsStr.c_str(), 10, 10, 20, WHITE);
+    DrawText(fpsStr.c_str(), 10, 40, 40, WHITE);
+
+    std::string countStr = "Entities drawn: " + std::to_string(drawnCount);
+    DrawText(countStr.c_str(), 10, 80, 40, WHITE);
+
+    std::string maxEnt = "Total entities: " + std::to_string(currentIndex);
+    DrawText(maxEnt.c_str(), 10, 120, 40, WHITE);
+}
+
+void Game::drawZombie() const{
+    Rectangle cameraRect = getCameraRect();
+    drawnCount = 0;
+    for(const Entity& entity : m_tree.search(a1)){
+        if(entity.hasComponent(ComponentTypes::POSITION)){
+            Vector2 pos = positionComponent.getPositionByIndex(entity.id);
+            DrawCircle(pos.x, pos.y, ZOMBIE_RADIUS, GREEN);
+            ++drawnCount;
+        }
+    }
+    /*
+    for(const Entity& entity : m_entities){
+        if(entity.hasComponent(ComponentTypes::POSITION)){
+            Vector2 position = positionComponent.getPositionByIndex(entity.id);
+            if(position.x > cameraRect.x && position.x < (cameraRect.x + cameraRect.width) &&
+               position.y > cameraRect.y && position.y < (cameraRect.y + cameraRect.height)){
+                DrawCircle(position.x, position.y, 15.f, GREEN);
+                ++drawnCount;
+            }
+        }
+    }
+    */
 }
