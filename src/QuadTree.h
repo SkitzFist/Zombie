@@ -1,128 +1,134 @@
 #ifndef ZOMBIE_QUAD_TREE_H_
 #define ZOMBIE_QUAD_TREE_H_
 
-#include <memory>
-#include <list>
 #include <array>
+#include <memory>
+#include <vector>
 
-#include "raylib.h"
-#include "Entity.h"
 #include "CollisionDetection.h"
+#include "PositionComponent.h"
+#include "SearchResult.h"
+#include "raylib.h"
 
-inline constexpr const int MAX_LEVEL = 3;
+inline constexpr const int MAX_LEVEL = 8;
 
 /*
     Childs go in order north-west, north-east, south-west and south-east
 */
 
-struct QuadTree{
+struct QuadTree {
     int level;
     Rectangle rect;
-    
+
     std::array<std::unique_ptr<QuadTree>, 4> children;
     Rectangle childRects[4];
 
-    std::list<Entity> entities; // maybe switch to another datastructure, needs to keep memory adress intact on insert.
+    std::vector<int> entities;
+    Rectangle zombieRect;
 
-    QuadTree(int level, const Rectangle& rect): 
-        level(level), rect(rect){
-        
+    QuadTree(int level, const Rectangle &rect) : level(level), rect(rect) {
+
         const float halfWidth = rect.width / 2;
         const float halfHeight = rect.height / 2;
         childRects[0] = {
             rect.x, rect.y,
-            halfWidth, halfHeight
-        };
+            halfWidth, halfHeight};
 
         childRects[1] = {
             (rect.x + halfWidth), rect.y,
-            halfWidth, halfHeight
-        };
+            halfWidth, halfHeight};
 
         childRects[2] = {
             rect.x, (rect.y + halfHeight),
-            halfWidth, halfHeight
-        };
+            halfWidth, halfHeight};
 
         childRects[3] = {
             (rect.x + halfWidth), (rect.y + halfHeight),
-            halfWidth, halfHeight
-        };
+            halfWidth, halfHeight};
     }
 
-    void add(const Entity& entity, const Rectangle& entityRect){
-        for(size_t i = 0; i < children.size(); ++i){
-            //if child exists and fits entirely, add it to child
-            if(children[i] && rectangleContains(children[i]->rect, entityRect)){
-                children[i]->add(entity, entityRect);
+    void add(const int &entityId, const Rectangle &entityRect) {
+        if (level == MAX_LEVEL) {
+            entities.push_back(entityId);
+            return;
+        }
+
+        for (size_t i = 0; i < children.size(); ++i) {
+            // if child exists and fits entirely, add it to child
+            if (children[i] && rectangleContains(children[i]->rect, entityRect)) {
+                children[i]->add(entityId, entityRect);
                 return;
-            } else if(rectangleContains(childRects[i], entityRect)){
+            } else if (rectangleContains(childRects[i], entityRect)) {
                 // if entity fits inside child but it doesn ot exist, create child and add entity
-                children[i] = std::make_unique<QuadTree>(level+1, childRects[i]);
-                children[i]->add(entity, entityRect);
+                children[i] = std::make_unique<QuadTree>(level + 1, childRects[i]);
+                children[i]->add(entityId, entityRect);
                 return;
             }
         }
 
-        //if no child can contain entity, add to this node
-        entities.push_back(entity);
+        // if no child can contain entity, add to this node
+        entities.push_back(entityId);
     }
 
-    void clear(){
+    void clear() {
         entities.clear();
 
-        for(auto& child : children){
-            if(child){
+        for (auto &child : children) {
+            if (child) {
                 child->clear();
             }
         }
     }
 
-    std::list<Entity> search(const Rectangle& area)const{
-        std::list<Entity> items;
-        search(area, items);
-        return items;
-    }
-
-    void search(const Rectangle& area, std::list<Entity>& items)const{
     
-        for(const auto& entity : entities){
-            //todo should check if overlaps
-            items.push_back(entity);
+    void search(const Rectangle &area, const PositionComponent &position, SearchResult &searchResult, const float radius){
+
+        for (const auto &entityID : entities) {
+            Vector2 pos = position.getPositionByIndex(entityID);
+            zombieRect = {pos.x - radius, pos.y - radius, radius*2, radius*2};
+            if(rectangleOverlaps(area, zombieRect)){
+                searchResult.add(entityID);
+            }
         }
 
-        for(size_t i = 0; i < children.size(); ++i){
-            
-            if(children[i]){
-                if(rectangleContains(area, children[i]->rect)){
-                    //if search area contains an entire child, retrieve all items from that child
-                    children[i]->items(items);
-
-                }else if(rectangleOverlaps(children[i]->rect, area)){
-                    children[i]->search(area, items);
+        for (size_t i = 0; i < children.size(); ++i) {
+            if (children[i]) {
+                if (rectangleContains(area, children[i]->rect)) {
+                    children[i]->getAll(searchResult);
+                } else if (rectangleOverlaps(area, children[i]->rect)) {
+                    children[i]->search(area, position, searchResult, radius);
                 }
             }
         }
     }
 
-    void items(std::list<Entity>& items)const{
-        for(const auto& entity : entities){
-            items.push_back(entity);
+    void getAll(SearchResult &SearchResult) {
+        for (const auto &entityID : entities) {
+            SearchResult.add(entityID);
         }
 
-        for(size_t i = 0; i < children.size(); ++i){
-
-            if(children[i]){
-
-                children[i]->items(items);
+        for (size_t i = 0; i < children.size(); ++i) {
+            if (children[i]) {
+                children[i]->getAll(SearchResult);
             }
         }
     }
 
-    ~QuadTree(){
-        //destroy all childs
+    void draw() const {
+
+        Color c = (level % 2) == 0 ? RAYWHITE : YELLOW;
+        DrawRectangleLinesEx(rect, 10.f, c);
+
+        for (size_t i = 0; i < children.size(); ++i) {
+            if (children[i]) {
+                children[i]->draw();
+            }
+        }
     }
 
+    ~QuadTree() {
+        // todo proper cleanup
+    }
 };
 
 #endif

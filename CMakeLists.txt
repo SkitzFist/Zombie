@@ -63,7 +63,7 @@ else()
   endif()
 endif()
 
-set(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
+#set(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
 
 #Build for desktop
 #cmake -S . -B build -G "MinGW Makefiles"
