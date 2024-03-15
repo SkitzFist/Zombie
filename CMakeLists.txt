@@ -24,14 +24,6 @@ FetchContent_Declare(
   GIT_TAG master)
 FetchContent_MakeAvailable(raylib)
 
-# Adding EnTT
-FetchContent_Declare(
-    entt
-    GIT_REPOSITORY https://github.com/skypjack/entt.git
-    GIT_TAG master # or a specific version tag like v3.8.0
-)
-FetchContent_MakeAvailable(entt)
-
 # Adding our source files
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 set(PROJECT_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/src/")
@@ -43,14 +35,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
 # Link against raylib
 target_link_libraries(${PROJECT_NAME} raylib)
-# Link against ENTT
-target_link_libraries(${PROJECT_NAME} EnTT::EnTT)
 
 # Specify C and C++ compilers for the desktop target
 if(NOT EMSCRIPTEN)
   set(CMAKE_SYSTEM_NAME Windows)
   set(CMAKE_C_COMPILER gcc)
-  set(CMAKE_CXX_COMPILER clang++)
+  set(CMAKE_CXX_COMPILER g++)
   set(CMAKE_MAKE_PROGRAM mingw32-make)
 endif()
 
@@ -73,8 +63,7 @@ else()
   endif()
 endif()
 
-# Set Visual Studio as the preferred IDE for CMake
-set(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
+#set(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
 
 #Build for desktop
 #cmake -S . -B build -G "MinGW Makefiles"

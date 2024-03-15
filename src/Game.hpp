@@ -1,11 +1,15 @@
 #ifndef _Game
 #define _Game
 
-#include <vector>
-
 #include "raylib.h"
-#include "entt/entt.hpp"
+#include "World.hpp"
 #include "CameraInput.hpp"
+#include "PositionComponent.h"
+#include "QuadTree.h"
+#include "SearchResult.h"
+#include "ZombieFactory.h"
+#include "MoveSystem.h"
+#include "ThreadPool.h"
 
 class Game{
 public:
@@ -18,19 +22,31 @@ public:
     void webRun();
 
 private:
+    Settings m_settings;
+    WorldBounds m_world;
     Camera2D m_camera;
     CameraInput m_cameraInput;
-    entt::registry m_registry;
+    QuadTree m_tree;
+    PositionComponent positionComponent;
+    SearchResult m_searchResult;
+    RenderTexture2D m_renderTexture;
+    ZombieFactory m_zombieFactory;
+    MoveSystem m_moveSystem;
+    ThreadPool m_threadPool;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
     void handleRenderSystems();
 
-    void initiateEntities();
-    
-    void drawZombies();
     void drawGrid() const; //debug, should be its own system
     void drawUi() const;
+    void drawZombie() const;
+
+    //debug
+    Rectangle getCameraRect() const;
+
+    int currentIndex = 0;
+    int maxBatchSize = 10000;
 };
 
 #endif

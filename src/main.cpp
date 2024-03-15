@@ -20,8 +20,8 @@ int main(){
     #if PLATFORM_WEB
         emscripten_set_main_loop(run, 0, 1);
     #else
-        int screenWidth = 1280;
-        int screenHeight = 720;
+        int screenWidth = 1920;
+        int screenHeight = 1080;
         Game game(screenWidth, screenHeight, false);
         game.run();
         CloseWindow();
@@ -30,8 +30,8 @@ int main(){
 }
 
 inline Game& getGameInstance() {
-    constexpr const int screenWidth = 800;
-    constexpr const int screenHeight = 600;
+    constexpr const int screenWidth = 1920;
+    constexpr const int screenHeight = 1080;
     static Game gameInstance(screenWidth,screenHeight, false);
     return gameInstance;
 }
