@@ -178,9 +178,28 @@ void Game::drawUi() const {
     DrawText(maxEnt.c_str(), 10, 120, 40, WHITE);
 }
 
-void Game::drawZombie()const{
+inline void draw(int startIndex, int length, PositionComponent& positions, SearchResult& SearchResult){
+    for(int i = startIndex; i < (startIndex + length); ++i){
+        int entityId = SearchResult.arr[i];
+        DrawCircle(positions.xPos[entityId], positions.yPos[entityId], 32, GREEN);
+    }
+}
+
+void Game::drawZombie(){
+
+    int numberOfThreads = 4;
+        int length = m_searchResult.size / numberOfThreads;
+        int startIndex = 0;
+
+        for (int i = 0; i < numberOfThreads; ++i) {
+            m_threadPool.enqueue(draw, startIndex, length, std::ref(positionComponent), m_searchResult);
+            startIndex += length;
+        }
+    
+    /*
     for(int i = 0; i < m_searchResult.size; ++i){
         Vector2 pos = positionComponent.getPositionByIndex(m_searchResult.arr[i]);
         DrawTexture(m_renderTexture.texture, pos.x, pos.y, WHITE);
     }
+    */
 }
