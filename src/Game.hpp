@@ -40,7 +40,7 @@ private:
 
     void drawGrid() const; //debug, should be its own system
     void drawUi() const;
-    void drawZombie() const;
+    void drawZombie();
 
     //debug
     Rectangle getCameraRect() const;

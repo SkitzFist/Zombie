@@ -7,14 +7,17 @@
 
 inline void move(int startIndex, int length, PositionComponent &positions, const float dt) {
     for (int i = startIndex; i < (startIndex + length); ++i) {
-        /*
+        
           Vector2 pos = {positions.xPos[i], 0.f};
           pos.x += 150.f * dt;
           positions.xPos[i] = pos.x;
-        */
+
+
+        /*
         Vector2 pos = positions.getPositionByIndex(i);
         pos.x += 150.f * dt;
         positions.update(pos.x, pos.y, i);
+        */
           
     }
 }
