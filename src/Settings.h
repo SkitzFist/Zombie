@@ -8,7 +8,7 @@ struct Settings {
     const int MAX_COMPONENTS = (int)ComponentTypes::COUNT;
 
     const float ZOMBIE_RADIUS = 32;
-    const float WORLD_SCALE = 500;
+    const float WORLD_SCALE = 800;
 };
 
 #endif 

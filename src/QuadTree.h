@@ -59,7 +59,7 @@ struct QuadTree {
                 children[i]->add(entityId, entityRect);
                 return;
             } else if (rectangleContains(childRects[i], entityRect)) {
-                // if entity fits inside child but it doesn ot exist, create child and add entity
+                // if entity fits inside child but child it does not exist, create child and add entity
                 children[i] = std::make_unique<QuadTree>(level + 1, childRects[i]);
                 children[i]->add(entityId, entityRect);
                 return;

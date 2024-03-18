@@ -5,12 +5,13 @@
 
 #include "raylib.h"
 #include "IndexIdLookup.h"
+#include "Settings.h"
 
 struct PositionComponent{
 
-    PositionComponent(){
-        xPos.reserve(10000000);
-        yPos.reserve(10000000);
+    PositionComponent(const Settings& settings){
+        xPos.reserve(settings.MAX_ENTITIES);
+        yPos.reserve(settings.MAX_ENTITIES);
     }
 
     void add(const float x, const float y, int id){

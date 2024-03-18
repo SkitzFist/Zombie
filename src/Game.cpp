@@ -19,7 +19,7 @@ Rectangle a2{200, 200, 100, 100};
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_camera(),
                                                                    m_tree(0, {0, 0, screenWidth * m_settings.WORLD_SCALE, screenHeight * m_settings.WORLD_SCALE}),
-                                                                   positionComponent(),
+                                                                   positionComponent(m_settings),
                                                                    m_searchResult(m_settings.MAX_ENTITIES),
                                                                    m_zombieFactory(m_tree, positionComponent, m_settings),
                                                                    m_threadPool(8) {
@@ -35,6 +35,7 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
 
     Vector2 windowPos = GetWindowPosition();
     windowPos.y += 50;
+    windowPos.x += 50;
     SetWindowPosition(windowPos.x, windowPos.y);
 #endif
 
@@ -64,11 +65,6 @@ void Game::run() {
         float dt = GetFrameTime();
         handleInputSystems();
         handleUpdateSystems(dt);
-
-        Rectangle cameraRect = getCameraRect();
-        m_searchResult.clear();
-        m_tree.search(cameraRect, positionComponent, m_searchResult, m_settings.ZOMBIE_RADIUS);
-
         handleRenderSystems();
     }
 }
@@ -77,31 +73,16 @@ void Game::webRun() {
     float dt = GetFrameTime();
     handleInputSystems();
     handleUpdateSystems(dt);
-    Rectangle cameraRect = getCameraRect();
-    m_searchResult.clear();
-    m_tree.search(cameraRect, positionComponent, m_searchResult, m_settings.ZOMBIE_RADIUS);
     handleRenderSystems();
 }
 
 void Game::handleInputSystems() {
     m_cameraInput.handleInput(m_camera);
 
-    Vector2 mousePos = GetMousePosition();
-    Vector2 worldPos = GetScreenToWorld2D(mousePos, m_camera);
-
-    a1.x = mousePos.x - (a1.width / 2.f);
-    a1.y = mousePos.y - (a1.height / 2.f);
-
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        Vector2 mousePos = GetMousePosition();
+        Vector2 worldPos = GetScreenToWorld2D(mousePos, m_camera);
         m_zombieFactory.createZombie(worldPos.x, worldPos.y);      
-    }
-
-    if (IsKeyPressed(KEY_E)) {
-        a1.width *= 1.2f;
-        a1.height *= 1.2f;
-    } else if (IsKeyPressed(KEY_Q)) {
-        a1.width *= 0.8f;
-        a1.height *= 0.8f;
     }
 
     if(IsKeyPressed(KEY_M)){
@@ -143,9 +124,14 @@ void Game::handleRenderSystems() {
 
     if (IsKeyDown(KEY_LEFT_CONTROL)) {
         m_tree.draw();
-    }
-    
+    }   
+
+    //draw zombies
+    Rectangle cameraRect = getCameraRect();
+    m_searchResult.clear();
+    m_tree.search(cameraRect, positionComponent, m_searchResult, m_settings.ZOMBIE_RADIUS);
     drawZombies(m_searchResult, positionComponent, m_renderTexture.texture);
+
     EndMode2D();
 
     drawUi(); // Allways draw last and outside of camera
@@ -176,30 +162,4 @@ void Game::drawUi() const {
 
     std::string maxEnt = "Total entities: " + std::to_string(currentIndex);
     DrawText(maxEnt.c_str(), 10, 120, 40, WHITE);
-}
-
-inline void draw(int startIndex, int length, PositionComponent& positions, SearchResult& SearchResult){
-    for(int i = startIndex; i < (startIndex + length); ++i){
-        int entityId = SearchResult.arr[i];
-        DrawCircle(positions.xPos[entityId], positions.yPos[entityId], 32, GREEN);
-    }
-}
-
-void Game::drawZombie(){
-
-    int numberOfThreads = 4;
-        int length = m_searchResult.size / numberOfThreads;
-        int startIndex = 0;
-
-        for (int i = 0; i < numberOfThreads; ++i) {
-            m_threadPool.enqueue(draw, startIndex, length, std::ref(positionComponent), m_searchResult);
-            startIndex += length;
-        }
-    
-    /*
-    for(int i = 0; i < m_searchResult.size; ++i){
-        Vector2 pos = positionComponent.getPositionByIndex(m_searchResult.arr[i]);
-        DrawTexture(m_renderTexture.texture, pos.x, pos.y, WHITE);
-    }
-    */
 }
