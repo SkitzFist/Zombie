@@ -84,7 +84,7 @@ struct QuadTree {
     void search(const Rectangle &area, const PositionComponent &position, SearchResult &searchResult, const float radius){
 
         for (const auto &entityID : entities) {
-            Vector2 pos = position.getPositionByIndex(entityID);
+            Vector2 pos = {position.xPos[entityID], position.yPos[entityID]};
             zombieRect = {pos.x - radius, pos.y - radius, radius*2, radius*2};
             if(rectangleOverlaps(area, zombieRect)){
                 searchResult.add(entityID);

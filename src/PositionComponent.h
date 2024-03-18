@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "raylib.h"
-#include "IndexIdLookup.h"
 #include "Settings.h"
 
 struct PositionComponent{
@@ -16,9 +15,7 @@ struct PositionComponent{
 
     void add(const float x, const float y, int id){
         (void)id;
-        //int index = getFirstFreeIndex(idToIndexLookup);
         ++size;
-        //int index = xPos.size();
         xPos.push_back(x);
         yPos.push_back(y);
     }
@@ -28,30 +25,9 @@ struct PositionComponent{
         yPos[index] = y;
     }
 
-    void remove(int id){
-        if(removeId(idToIndexLookup, id)){
-            --size;   
-        }
-    }
-
-    Vector2 getPosition(int id) const{
-        int index = getIndex(idToIndexLookup, id);
-
-        return {xPos[index], yPos[index]};
-    }
-
-    Vector2 getPositionByIndex(int index) const{
-        return {xPos[index], yPos[index]};
-    }
-
-    bool exists(int id) const{
-        return idExists(idToIndexLookup , id);
-    }
-
     std::vector<float> xPos;
     std::vector<float> yPos;
     int size = 0;
-    std::vector<IndexId> idToIndexLookup;
 };
 
 #endif //ZOMBIE_POSITION_COMPONENT_H_

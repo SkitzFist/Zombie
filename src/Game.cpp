@@ -19,10 +19,11 @@ Rectangle a2{200, 200, 100, 100};
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_camera(),
                                                                    m_tree(0, {0, 0, screenWidth * m_settings.WORLD_SCALE, screenHeight * m_settings.WORLD_SCALE}),
-                                                                   positionComponent(m_settings),
                                                                    m_searchResult(m_settings.MAX_ENTITIES),
-                                                                   m_zombieFactory(m_tree, positionComponent, m_settings),
-                                                                   m_threadPool(8) {
+                                                                   m_threadPool(8),
+                                                                   positionComponent(m_settings),
+                                                                   speedComponent(m_settings),
+                                                                   m_zombieFactory(m_tree, positionComponent, speedComponent,m_settings){
 
 #if PLATFORM_WEB
     InitWindow(screenWidth, screenHeight, "Zombie");
@@ -82,7 +83,7 @@ void Game::handleInputSystems() {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         Vector2 mousePos = GetMousePosition();
         Vector2 worldPos = GetScreenToWorld2D(mousePos, m_camera);
-        m_zombieFactory.createZombie(worldPos.x, worldPos.y);      
+        m_zombieFactory.createZombie(worldPos.x, worldPos.y, 0.005f, 0.f);      
     }
 
     if(IsKeyPressed(KEY_M)){
@@ -94,7 +95,7 @@ void Game::handleUpdateSystems(float dt) {
     (void)dt;
 
     if (currentIndex >= (m_settings.MAX_ENTITIES - 1)) {
-        m_moveSystem.update(positionComponent, m_threadPool);
+        m_moveSystem.update(positionComponent, speedComponent, m_threadPool);
         return;
     }
 
@@ -106,7 +107,7 @@ void Game::handleUpdateSystems(float dt) {
         float randX = GetRandomValue(0, m_world.width);
         float randY = GetRandomValue(0, m_world.height);
 
-        m_zombieFactory.createZombie(randX, randY);        
+        m_zombieFactory.createZombie(randX, randY, 0.005f, 0.f);
     }
 }
 

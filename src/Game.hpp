@@ -5,6 +5,7 @@
 #include "World.hpp"
 #include "CameraInput.hpp"
 #include "PositionComponent.h"
+#include "SpeedComponent.h"
 #include "QuadTree.h"
 #include "SearchResult.h"
 #include "ZombieFactory.h"
@@ -26,13 +27,18 @@ private:
     WorldBounds m_world;
     Camera2D m_camera;
     CameraInput m_cameraInput;
+    
     QuadTree m_tree;
-    PositionComponent positionComponent;
     SearchResult m_searchResult;
+    ThreadPool m_threadPool;
+    
+    PositionComponent positionComponent;
+    SpeedComponent speedComponent;
+
     RenderTexture2D m_renderTexture;
     ZombieFactory m_zombieFactory;
+    
     MoveSystem m_moveSystem;
-    ThreadPool m_threadPool;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
