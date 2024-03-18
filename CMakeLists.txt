@@ -47,9 +47,11 @@ endif()
 # Platform-specific options
 if(EMSCRIPTEN)
   set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    # Set properties to enable pthreads and apply necessary compilation and link options
   set_target_properties(${PROJECT_NAME} PROPERTIES
     SUFFIX ".html"
-    LINK_FLAGS "-s USE_GLFW=3 -s -sFULL_ES2 -sFORCE_FILESYSTEM -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
+    COMPILE_OPTIONS "-pthread"
+    LINK_FLAGS "-s USE_GLFW=3 -s -sFULL_ES2 -sFORCE_FILESYSTEM -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
   )
 else()
   # Compiler options for desktop platform
