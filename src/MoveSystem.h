@@ -34,10 +34,10 @@ inline void updateVelY(int startIndex, int length, SpeedComponent &speeds) {
 }
 
 struct MoveSystem {
-    bool isActive = false;
+    bool isEnabled = false;
 
     void update(PositionComponent &positions, SpeedComponent &speeds, ThreadPool &threadPool) {
-        if (!isActive) {
+        if (!isEnabled) {
             return;
         }
 

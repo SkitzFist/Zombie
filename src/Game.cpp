@@ -17,13 +17,15 @@ Rectangle a2{200, 200, 100, 100};
 // debug
 
 Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
+                                                                   m_world({screenWidth * m_settings.WORLD_SCALE, screenHeight * m_settings.WORLD_SCALE, 32}),
                                                                    m_camera(),
-                                                                   m_tree(0, {0, 0, screenWidth * m_settings.WORLD_SCALE, screenHeight * m_settings.WORLD_SCALE}),
+                                                                   m_tree(0, {0, 0, (float)screenWidth * m_settings.WORLD_SCALE, (float)screenHeight * m_settings.WORLD_SCALE}),
                                                                    m_searchResult(m_settings.MAX_ENTITIES),
                                                                    m_threadPool(8),
-                                                                   positionComponent(m_settings),
+                                                                   m_positions(m_settings),
                                                                    speedComponent(m_settings),
-                                                                   m_zombieFactory(m_tree, positionComponent, speedComponent,m_settings){
+                                                                   m_zombieFactory(m_tree, m_positions, speedComponent,m_settings),
+                                                                   m_outOfboundsSystem(m_settings, m_world){
 
 #if PLATFORM_WEB
     InitWindow(screenWidth, screenHeight, "Zombie");
@@ -39,10 +41,6 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
     windowPos.x += 50;
     SetWindowPosition(windowPos.x, windowPos.y);
 #endif
-
-    m_world.width = screenWidth * m_settings.WORLD_SCALE;
-    m_world.height = screenHeight * m_settings.WORLD_SCALE;
-    m_world.tileSize = 32;
 
     SetTargetFPS(60);
     SetExitKey(KEY_ESCAPE);
@@ -87,7 +85,8 @@ void Game::handleInputSystems() {
     }
 
     if(IsKeyPressed(KEY_M)){
-        m_moveSystem.isActive = !m_moveSystem.isActive;
+        m_moveSystem.isEnabled = !m_moveSystem.isEnabled;
+        m_outOfboundsSystem.isEnabled = !m_outOfboundsSystem.isEnabled;
     }
 }
 
@@ -95,7 +94,10 @@ void Game::handleUpdateSystems(float dt) {
     (void)dt;
 
     if (currentIndex >= (m_settings.MAX_ENTITIES - 1)) {
-        m_moveSystem.update(positionComponent, speedComponent, m_threadPool);
+        m_moveSystem.update(m_positions, speedComponent, m_threadPool);
+        m_outOfboundsSystem.search(m_tree, m_threadPool, m_positions);
+        //should have something in between here
+        m_outOfboundsSystem.update(m_threadPool, m_positions, m_world);
         return;
     }
 
@@ -130,8 +132,15 @@ void Game::handleRenderSystems() {
     //draw zombies
     Rectangle cameraRect = getCameraRect();
     m_searchResult.clear();
-    m_tree.search(cameraRect, positionComponent, m_searchResult, m_settings.ZOMBIE_RADIUS);
-    drawZombies(m_searchResult, positionComponent, m_renderTexture.texture);
+    m_tree.search(cameraRect, m_positions, m_searchResult, m_settings.ZOMBIE_RADIUS);
+    drawZombies(m_searchResult, m_positions, m_renderTexture.texture);
+
+    /*
+    DrawRectangleRec(m_outOfboundsSystem.left, GREEN);
+    DrawRectangleRec(m_outOfboundsSystem.right, GREEN);
+    DrawRectangleRec(m_outOfboundsSystem.top, YELLOW);
+    DrawRectangleRec(m_outOfboundsSystem.bot, YELLOW);
+    */
 
     EndMode2D();
 

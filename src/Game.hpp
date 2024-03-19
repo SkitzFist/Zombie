@@ -2,15 +2,20 @@
 #define _Game
 
 #include "raylib.h"
+#include "ThreadPool.h"
 #include "World.hpp"
 #include "CameraInput.hpp"
+
 #include "PositionComponent.h"
 #include "SpeedComponent.h"
+
 #include "QuadTree.h"
 #include "SearchResult.h"
+
 #include "ZombieFactory.h"
+
 #include "MoveSystem.h"
-#include "ThreadPool.h"
+#include "OutOfBoundsSystem.h"
 
 class Game{
 public:
@@ -32,13 +37,14 @@ private:
     SearchResult m_searchResult;
     ThreadPool m_threadPool;
     
-    PositionComponent positionComponent;
+    PositionComponent m_positions;
     SpeedComponent speedComponent;
 
     RenderTexture2D m_renderTexture;
     ZombieFactory m_zombieFactory;
     
     MoveSystem m_moveSystem;
+    OutOfBoundsSystem m_outOfboundsSystem;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
