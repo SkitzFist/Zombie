@@ -7,8 +7,8 @@ set(CMAKE_BUILD_TYPE Debug)
 
 project(ZombieGame)
 
-# Adding Raylib
 include(FetchContent)
+# Adding Raylib
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
 set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # don't build the supplied example games
 
@@ -33,10 +33,8 @@ add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
-# Link against raylib
 target_link_libraries(${PROJECT_NAME} raylib)
 
-# Specify C and C++ compilers for the desktop target
 if(NOT EMSCRIPTEN)
   set(CMAKE_SYSTEM_NAME Windows)
   set(CMAKE_C_COMPILER gcc)
@@ -44,35 +42,20 @@ if(NOT EMSCRIPTEN)
   set(CMAKE_MAKE_PROGRAM mingw32-make)
 endif()
 
-# Platform-specific options
 if(EMSCRIPTEN)
   set(CMAKE_EXECUTABLE_SUFFIX ".html")
-    # Set properties to enable pthreads and apply necessary compilation and link options
+  target_compile_options(${PROJECT_NAME} PRIVATE -O3 -pthread)
   set_target_properties(${PROJECT_NAME} PROPERTIES
     SUFFIX ".html"
-    COMPILE_OPTIONS "-pthread"
-    LINK_FLAGS "-s USE_GLFW=3 -s -sFULL_ES2 -sFORCE_FILESYSTEM -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
+    LINK_FLAGS "-O3 -s USE_GLFW=3 -s -sFULL_ES2 -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
   )
 else()
-  # Compiler options for desktop platform
   if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /O2)
   else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O2)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O3)
     set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "-lwinmm -lgdi32 -luser32"
+    LINK_FLAGS "-O3 -lwinmm -lgdi32 -luser32"
 )
   endif()
 endif()
-
-#set(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
-
-#Build for desktop
-#cmake -S . -B build -G "MinGW Makefiles"
-#cmake --build build
-#.\build\ZombieGame.exe
-
-#Build for web
-#emcmake cmake -S . -B build_web
-#cmake --build build_web
-#emrun .\build_web\ZombieGame.html 
