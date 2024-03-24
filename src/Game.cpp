@@ -24,8 +24,9 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_threadPool(8),
                                                                    m_positions(m_settings),
                                                                    speedComponent(m_settings),
-                                                                   m_zombieFactory(m_tree, m_positions, speedComponent,m_settings),
-                                                                   m_outOfboundsSystem(m_settings, m_world){
+                                                                   m_zombieFactory(m_tree, m_positions, speedComponent, m_settings),
+                                                                   m_dynamicTreeSystem(m_settings),
+                                                                   m_simpleOutOfBoundsSystem(m_settings) {
 
 #if PLATFORM_WEB
     InitWindow(screenWidth, screenHeight, "Zombie");
@@ -52,7 +53,7 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
 
     m_renderTexture = LoadRenderTexture(m_settings.ZOMBIE_RADIUS * 2, m_settings.ZOMBIE_RADIUS * 2);
     BeginTextureMode(m_renderTexture);
-        DrawCircle(m_renderTexture.texture.width / 2, m_renderTexture.texture.height / 2, m_settings.ZOMBIE_RADIUS, GREEN);
+    DrawCircle(m_renderTexture.texture.width / 2, m_renderTexture.texture.height / 2, m_settings.ZOMBIE_RADIUS, GREEN);
     EndTextureMode();
 }
 
@@ -61,6 +62,7 @@ Game::~Game() {
 
 void Game::run() {
     while (!WindowShouldClose()) {
+        m_threadPool.awaitCompletion();
         float dt = GetFrameTime();
         handleInputSystems();
         handleUpdateSystems(dt);
@@ -70,6 +72,7 @@ void Game::run() {
 
 void Game::webRun() {
     float dt = GetFrameTime();
+    m_threadPool.awaitCompletion();
     handleInputSystems();
     handleUpdateSystems(dt);
     handleRenderSystems();
@@ -81,12 +84,15 @@ void Game::handleInputSystems() {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         Vector2 mousePos = GetMousePosition();
         Vector2 worldPos = GetScreenToWorld2D(mousePos, m_camera);
-        m_zombieFactory.createZombie(worldPos.x, worldPos.y, 0.005f, 0.f);      
+        m_zombieFactory.createZombie(worldPos.x, worldPos.y, 0.005f, 0.f, m_dynamicTreeSystem.entityToTreeLookup, m_dynamicTreeSystem.entityToTreeIndexlookup, m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
     }
 
-    if(IsKeyPressed(KEY_M)){
+    if (IsKeyPressed(KEY_M)) {
         m_moveSystem.isEnabled = !m_moveSystem.isEnabled;
-        m_outOfboundsSystem.isEnabled = !m_outOfboundsSystem.isEnabled;
+    } else if (IsKeyPressed(KEY_K)) {
+        m_dynamicTreeSystem.isEnabled = !m_dynamicTreeSystem.isEnabled;
+    } else if (IsKeyPressed(KEY_O)) {
+        m_simpleOutOfBoundsSystem.isEnabled = !m_simpleOutOfBoundsSystem.isEnabled;
     }
 }
 
@@ -94,27 +100,38 @@ void Game::handleUpdateSystems(float dt) {
     (void)dt;
 
     if (currentIndex >= (m_settings.MAX_ENTITIES - 1)) {
+
+        m_dynamicTreeSystem.update(m_settings, m_positions, m_tree, m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
+        m_simpleOutOfBoundsSystem.update(m_settings, m_tree, m_dynamicTreeSystem, m_positions, m_world);
+
         m_moveSystem.update(m_positions, speedComponent, m_threadPool);
-        m_outOfboundsSystem.search(m_tree, m_threadPool, m_positions);
-        //should have something in between here
-        m_outOfboundsSystem.update(m_threadPool, m_positions, m_world);
+
+        m_threadPool.awaitCompletion();
         return;
     }
 
     int maxBatch = currentIndex + maxBatchSize;
     if (maxBatch > m_settings.MAX_ENTITIES) {
-        maxBatch = m_settings.MAX_ENTITIES - 1;
+        maxBatch = m_settings.MAX_ENTITIES;
     }
     for (; currentIndex < maxBatch; ++currentIndex) {
         float randX = GetRandomValue(0, m_world.width);
         float randY = GetRandomValue(0, m_world.height);
 
-        m_zombieFactory.createZombie(randX, randY, 0.005f, 0.f);
+        float randomAccX = GetRandomValue(-10, 10) / 10000.f;
+        float randomAccY = GetRandomValue(-10, 10) / 10000.f;
+        m_zombieFactory.createZombie(randX,
+                                     randY,
+                                     randomAccX,
+                                     randomAccY,
+                                     m_dynamicTreeSystem.entityToTreeLookup,
+                                     m_dynamicTreeSystem.entityToTreeIndexlookup,
+                                     m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
     }
 }
 
 Rectangle Game::getCameraRect() const {
-    Vector2 cameraPos = m_camera.target; // GetScreenToWorld2D(m_camera.target, m_camera);
+    Vector2 cameraPos = m_camera.target;
     Vector2 size = {GetScreenWidth() / m_camera.zoom, GetScreenHeight() / m_camera.zoom};
     return {cameraPos.x, cameraPos.y, size.x, size.y};
 }
@@ -125,12 +142,14 @@ void Game::handleRenderSystems() {
     BeginDrawing();
     BeginMode2D(m_camera);
 
-    if (IsKeyDown(KEY_LEFT_CONTROL)) {
-        m_tree.draw();
-    }   
-
-    //draw zombies
     Rectangle cameraRect = getCameraRect();
+
+    if (IsKeyDown(KEY_LEFT_CONTROL)) {
+        m_tree.draw(cameraRect);
+    }
+
+    // draw zombies
+    
     m_searchResult.clear();
     m_tree.search(cameraRect, m_positions, m_searchResult, m_settings.ZOMBIE_RADIUS);
     drawZombies(m_searchResult, m_positions, m_renderTexture.texture);

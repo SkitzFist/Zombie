@@ -123,7 +123,6 @@ struct OutOfBoundsSystem {
       rightWall.clear();
       topWall.clear();
       botWall.clear();
-
     }
 };
 

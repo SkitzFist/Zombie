@@ -12,6 +12,7 @@
 inline void moveX(int startIndex, int length, PositionComponent &positions, SpeedComponent &speeds) {
     for (int i = startIndex; i < (startIndex + length); ++i) {
         positions.xPos[i] += speeds.velX[i];
+        positions.yPos[i] += speeds.velY[i];
     }
 }
 
@@ -24,6 +25,7 @@ inline void moveY(int startIndex, int length, PositionComponent &positions, Spee
 inline void updateVelX(int startIndex, int length, SpeedComponent &speeds) {
     for (int i = startIndex; i < (startIndex + length); ++i) {
         speeds.velX[i] += speeds.accX[i];
+        speeds.velY[i] += speeds.accY[i];
     }
 }
 
@@ -42,7 +44,7 @@ struct MoveSystem {
         }
 
 
-        int numberOfThreads = 2;
+        int numberOfThreads = 4;
         int length = positions.size / numberOfThreads;
         int startIndex = 0;
 
@@ -53,13 +55,13 @@ struct MoveSystem {
 
         startIndex = 0;
         for (int i = 0; i < numberOfThreads; ++i) {
-            threadPool.enqueue(updateVelY, startIndex, length, std::ref(speeds));
+            threadPool.enqueue(moveX, startIndex, length, std::ref(positions), std::ref(speeds));
             startIndex += length;
         }
-
+        /*
         startIndex = 0;
         for (int i = 0; i < numberOfThreads; ++i) {
-            threadPool.enqueue(moveX, startIndex, length, std::ref(positions), std::ref(speeds));
+            threadPool.enqueue(updateVelY, startIndex, length, std::ref(speeds));
             startIndex += length;
         }
 
@@ -68,6 +70,7 @@ struct MoveSystem {
             threadPool.enqueue(moveY, startIndex, length, std::ref(positions), std::ref(speeds));
             startIndex += length;
         }
+        */
     }
 };
 
