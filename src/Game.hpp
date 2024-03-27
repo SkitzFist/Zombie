@@ -17,6 +17,7 @@
 #include "DynamicTreeSystem.h"
 #include "MoveSystem.h"
 #include "SimpleOutOfBoundsSystem.h"
+#include "BoidSystem.h"
 
 class Game{
 public:
@@ -40,15 +41,15 @@ private:
     ThreadPool m_threadPool;
     
     PositionComponent m_positions;
-    SpeedComponent speedComponent;
+    SpeedComponent m_speeds;
 
     RenderTexture2D m_renderTexture;
     ZombieFactory m_zombieFactory;
     
     DynamicTreeSystem m_dynamicTreeSystem;
     MoveSystem m_moveSystem;
-    //OutOfBoundsSystem m_outOfboundsSystem;
     SimpleOutOfBoundSystem m_simpleOutOfBoundsSystem;
+    BoidSystem m_boidSystem;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);

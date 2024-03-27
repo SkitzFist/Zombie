@@ -14,7 +14,7 @@
 #include "Log.hpp"
 
 struct DynamicTreeSystem {
-    bool isEnabled = false;
+    bool isEnabled = true;
 
     std::vector<QuadTree *> entityToTreeLookup;
     std::vector<int> entitiesToReinsert;
@@ -26,7 +26,7 @@ struct DynamicTreeSystem {
     DynamicTreeSystem(Settings &settings) : entityToTreeLookup(settings.MAX_ENTITIES),
                                             entitiesToReinsert(settings.MAX_ENTITIES),
                                             currentIndex(0),
-                                            batchSize(settings.MAX_ENTITIES / 4) {
+                                            batchSize(settings.MAX_ENTITIES / 1) {
         entityToTreeIndexlookup.resize(settings.MAX_ENTITIES);
     }
 

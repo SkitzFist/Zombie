@@ -10,7 +10,7 @@
 #include "SearchResult.h"
 #include "raylib.h"
 
-inline constexpr const int MAX_LEVEL = 10;
+inline constexpr const int MAX_LEVEL = 8;
 
 /*
     Childs go in order north-west, north-east, south-west and south-east
@@ -78,10 +78,12 @@ struct QuadTree {
             }
         }
 
+        /*
         // if no child can contain entity, add to this node
         entities.push_back(entityId);
         entityToTreeLookup[entityId] = this;
         entityToTreeIndexLookup[entityId] = entities.size() - 1;
+        */
     }
 
     void clear() {
@@ -98,7 +100,7 @@ struct QuadTree {
 
         for (const auto &entityID : entities) {
             Vector2 pos = {position.xPos[entityID], position.yPos[entityID]};
-            zombieRect = {pos.x - radius, pos.y - radius, radius * 2, radius * 2};
+            zombieRect = {pos.x, pos.y, radius * 2, radius * 2};
             if (rectangleOverlaps(area, zombieRect)) {
                 searchResult.add(entityID);
             }

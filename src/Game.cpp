@@ -23,10 +23,11 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_searchResult(m_settings.MAX_ENTITIES),
                                                                    m_threadPool(8),
                                                                    m_positions(m_settings),
-                                                                   speedComponent(m_settings),
-                                                                   m_zombieFactory(m_tree, m_positions, speedComponent, m_settings),
+                                                                   m_speeds(m_settings),
+                                                                   m_zombieFactory(m_tree, m_positions, m_speeds, m_settings),
                                                                    m_dynamicTreeSystem(m_settings),
-                                                                   m_simpleOutOfBoundsSystem(m_settings) {
+                                                                   m_simpleOutOfBoundsSystem(m_settings),
+                                                                   m_boidSystem(m_settings) {
 
 #if PLATFORM_WEB
     InitWindow(screenWidth, screenHeight, "Zombie");
@@ -93,6 +94,14 @@ void Game::handleInputSystems() {
         m_dynamicTreeSystem.isEnabled = !m_dynamicTreeSystem.isEnabled;
     } else if (IsKeyPressed(KEY_O)) {
         m_simpleOutOfBoundsSystem.isEnabled = !m_simpleOutOfBoundsSystem.isEnabled;
+    } else if (IsKeyPressed(KEY_B)){
+        m_boidSystem.isEnabled  = !m_boidSystem.isEnabled;
+    } else if (IsKeyPressed(KEY_ONE)) {
+        m_boidSystem.alignemntEnabled = !m_boidSystem.alignemntEnabled;
+    } else if (IsKeyPressed(KEY_TWO)) {
+        m_boidSystem.seperationEnabled = !m_boidSystem.seperationEnabled;
+    } else if (IsKeyPressed(KEY_THREE)) {
+        m_boidSystem.cohesionEnabled = !m_boidSystem.cohesionEnabled;
     }
 }
 
@@ -104,7 +113,9 @@ void Game::handleUpdateSystems(float dt) {
         m_dynamicTreeSystem.update(m_settings, m_positions, m_tree, m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
         m_simpleOutOfBoundsSystem.update(m_settings, m_tree, m_dynamicTreeSystem, m_positions, m_world);
 
-        m_moveSystem.update(m_positions, speedComponent, m_threadPool);
+        m_boidSystem.update(m_settings, m_tree, m_speeds, m_positions);
+
+        m_moveSystem.update(m_positions, m_speeds, m_threadPool);
 
         m_threadPool.awaitCompletion();
         return;
@@ -118,8 +129,8 @@ void Game::handleUpdateSystems(float dt) {
         float randX = GetRandomValue(0, m_world.width);
         float randY = GetRandomValue(0, m_world.height);
 
-        float randomAccX = GetRandomValue(-10, 10) / 10000.f;
-        float randomAccY = GetRandomValue(-10, 10) / 10000.f;
+        float randomAccX = GetRandomValue(-1, 1);
+        float randomAccY = GetRandomValue(-1, 1);
         m_zombieFactory.createZombie(randX,
                                      randY,
                                      randomAccX,
@@ -148,18 +159,10 @@ void Game::handleRenderSystems() {
         m_tree.draw(cameraRect);
     }
 
-    // draw zombies
-    
+    // Draw zombies
     m_searchResult.clear();
     m_tree.search(cameraRect, m_positions, m_searchResult, m_settings.ZOMBIE_RADIUS);
     drawZombies(m_searchResult, m_positions, m_renderTexture.texture);
-
-    /*
-    DrawRectangleRec(m_outOfboundsSystem.left, GREEN);
-    DrawRectangleRec(m_outOfboundsSystem.right, GREEN);
-    DrawRectangleRec(m_outOfboundsSystem.top, YELLOW);
-    DrawRectangleRec(m_outOfboundsSystem.bot, YELLOW);
-    */
 
     EndMode2D();
 
@@ -183,12 +186,44 @@ void Game::drawGrid() const {
 }
 
 void Game::drawUi() const {
+    int fontSize = 27;
+    int spacing = 30;
+    int cSpacing = spacing / 3;
+    int xPos = 10;
+
     std::string fpsStr = std::to_string(GetFPS());
-    DrawText(fpsStr.c_str(), 10, 40, 40, WHITE);
+    DrawText(fpsStr.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
 
-    std::string countStr = "Entities drawn: " + std::to_string(m_searchResult.size);
-    DrawText(countStr.c_str(), 10, 80, 40, WHITE);
+    std::string countStr = "Entities drawn: " + std::to_string(m_searchResult.size) + " / " + std::to_string(currentIndex);
+    DrawText(countStr.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
 
-    std::string maxEnt = "Total entities: " + std::to_string(currentIndex);
-    DrawText(maxEnt.c_str(), 10, 120, 40, WHITE);
+    std::string dynamicTree = "Dynamic Tree: " + std::to_string(m_dynamicTreeSystem.isEnabled);
+    DrawText(dynamicTree.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string outOfBounds = "OutOfBounds: " + std::to_string(m_simpleOutOfBoundsSystem.isEnabled);
+    DrawText(outOfBounds.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string moveSystem = "MoveSystem: " + std::to_string(m_moveSystem.isEnabled);
+    DrawText(moveSystem.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string boidsSystem = "BoidSystem: " + std::to_string(m_boidSystem.isEnabled);
+    DrawText(boidsSystem.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string alignment = "alignment: " + std::to_string(m_boidSystem.alignemntEnabled);
+    DrawText(alignment.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string seperation = "seperation: " + std::to_string(m_boidSystem.seperationEnabled);
+    DrawText(seperation.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string cohesion = "cohesion: " + std::to_string(m_boidSystem.cohesionEnabled);
+    DrawText(cohesion.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
 }

@@ -44,18 +44,18 @@ endif()
 
 if(EMSCRIPTEN)
   set(CMAKE_EXECUTABLE_SUFFIX ".html")
-  target_compile_options(${PROJECT_NAME} PRIVATE -O3 -pthread)
+  target_compile_options(${PROJECT_NAME} PRIVATE -msimd128 -O3 -pthread)
   set_target_properties(${PROJECT_NAME} PROPERTIES
     SUFFIX ".html"
-    LINK_FLAGS "-O3 -s USE_GLFW=3 -s -sFULL_ES2 -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
+    LINK_FLAGS "-msimd128 -O3 -s USE_GLFW=3 -s -sFULL_ES2 -sALLOW_MEMORY_GROWTH -DPLATFORM_WEB -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=8 --shell-file ${CMAKE_SOURCE_DIR}/shell.html"
   )
 else()
   if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /O2)
   else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O3)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O3 -msse2 -mfpmath=sse  -ftree-vectorizer-verbose=5)
     set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "-O3 -lwinmm -lgdi32 -luser32"
+    LINK_FLAGS "-O3 -msse2 -mfpmath=sse  -ftree-vectorizer-verbose=5 -lwinmm -lgdi32 -luser32"
 )
   endif()
 endif()

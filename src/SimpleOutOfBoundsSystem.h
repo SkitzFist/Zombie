@@ -13,7 +13,7 @@
 struct SimpleOutOfBoundSystem {
     std::vector<int> entitiesOutOfBounds;
     std::vector<int> reinsert;
-    bool isEnabled = false;
+    bool isEnabled = true;
 
     SimpleOutOfBoundSystem(Settings &settings){
       entitiesOutOfBounds.reserve(settings.MAX_ENTITIES / 2);

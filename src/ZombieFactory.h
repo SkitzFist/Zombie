@@ -29,7 +29,7 @@ struct ZombieFactory {
       }
 
       positions.add(x, y, ID);
-      speeds.add(0.f, 0.f, accX, accY);
+      speeds.add(accX, accY, 0.f, 0.f);
       /*
       Rectangle zombieRect = {
         x - (settings.ZOMBIE_RADIUS / 2.f),
