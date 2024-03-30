@@ -30,7 +30,7 @@ struct DynamicTreeSystem {
         entityToTreeIndexlookup.resize(settings.MAX_ENTITIES);
     }
 
-    void update(Settings &settings, PositionComponent &positions, QuadTree &quadTree, std::vector<int>& entitiesOutOfBounds) {
+    void update(Settings &settings, PositionComponent &positions, QuadTree &quadTree, std::vector<int> &entitiesOutOfBounds) {
         if (!isEnabled) {
             return;
         }
@@ -51,7 +51,7 @@ struct DynamicTreeSystem {
         rect.width = settings.ZOMBIE_RADIUS * 2.f;
         rect.height = settings.ZOMBIE_RADIUS * 2.f;
         for (; currentIndex < batch; ++currentIndex) {
-            if(entityToTreeLookup[currentIndex] == nullptr){
+            if (entityToTreeLookup[currentIndex] == nullptr) {
                 continue;
             }
 

@@ -24,10 +24,11 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_threadPool(8),
                                                                    m_positions(m_settings),
                                                                    m_speeds(m_settings),
+                                                                   m_boids(m_settings),
                                                                    m_zombieFactory(m_tree, m_positions, m_speeds, m_settings),
                                                                    m_dynamicTreeSystem(m_settings),
                                                                    m_simpleOutOfBoundsSystem(m_settings),
-                                                                   m_boidSystem(m_settings) {
+                                                                   m_boidSystem() {
 
 #if PLATFORM_WEB
     InitWindow(screenWidth, screenHeight, "Zombie");
@@ -94,8 +95,8 @@ void Game::handleInputSystems() {
         m_dynamicTreeSystem.isEnabled = !m_dynamicTreeSystem.isEnabled;
     } else if (IsKeyPressed(KEY_O)) {
         m_simpleOutOfBoundsSystem.isEnabled = !m_simpleOutOfBoundsSystem.isEnabled;
-    } else if (IsKeyPressed(KEY_B)){
-        m_boidSystem.isEnabled  = !m_boidSystem.isEnabled;
+    } else if (IsKeyPressed(KEY_B)) {
+        m_boidSystem.isEnabled = !m_boidSystem.isEnabled;
     } else if (IsKeyPressed(KEY_ONE)) {
         m_boidSystem.alignemntEnabled = !m_boidSystem.alignemntEnabled;
     } else if (IsKeyPressed(KEY_TWO)) {
@@ -113,7 +114,7 @@ void Game::handleUpdateSystems(float dt) {
         m_dynamicTreeSystem.update(m_settings, m_positions, m_tree, m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
         m_simpleOutOfBoundsSystem.update(m_settings, m_tree, m_dynamicTreeSystem, m_positions, m_world);
 
-        m_boidSystem.update(m_settings, m_tree, m_speeds, m_positions);
+        m_boidSystem.update(m_settings, m_threadPool, m_tree, m_positions, m_speeds, m_boids);
 
         m_moveSystem.update(m_positions, m_speeds, m_threadPool);
 
@@ -129,8 +130,8 @@ void Game::handleUpdateSystems(float dt) {
         float randX = GetRandomValue(0, m_world.width);
         float randY = GetRandomValue(0, m_world.height);
 
-        float randomAccX = GetRandomValue(-1, 1);
-        float randomAccY = GetRandomValue(-1, 1);
+        float randomAccX = GetRandomValue(-5, 5);
+        float randomAccY = GetRandomValue(-5, 5);
         m_zombieFactory.createZombie(randX,
                                      randY,
                                      randomAccX,
