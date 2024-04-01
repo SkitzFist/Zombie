@@ -1,6 +1,10 @@
 #ifndef ZOMBIE_MF_BOID_SYSTEM_H_
 #define ZOMBIE_MF_BOID_SYSTEM_H_
 
+#include <cmath>
+#include <emmintrin.h> // SSE2
+#include <smmintrin.h> // SSE4.1
+
 #include "BoidComponent.h"
 #include "MathHack.hpp"
 #include "PositionComponent.h"
@@ -13,6 +17,127 @@
 // debug
 
 #include "Log.hpp"
+/*
+inline void calcAlignmentAVX2(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
+    int count = 0;
+    __m256 alignmentX = _mm256_setzero_ps(); // Zero initialize AVX2 register for X
+    __m256 alignmentY = _mm256_setzero_ps(); // Zero initialize AVX2 register for Y
+
+    for (int i = 0; i < searchResult.size; i += 8) {
+        int blockSize = std::min(8, searchResult.size - i);
+
+        __m256 velX, velY;
+        if (blockSize < 8) {
+            float tempX[8] = {0};
+            float tempY[8] = {0};
+            for (int j = 0; j < blockSize; ++j) {
+                int otherID = searchResult.arr[i + j];
+                if (otherID == id)
+                    continue; // Skip if the same ID
+
+                tempX[j] = speeds.velX[otherID];
+                tempY[j] = speeds.velY[otherID];
+                count++;
+            }
+            velX = _mm256_loadu_ps(tempX); // Unaligned load for X
+            velY = _mm256_loadu_ps(tempY); // Unaligned load for Y
+        } else {
+            velX = _mm256_set_ps(speeds.velX[searchResult.arr[i + 7]],
+                                 speeds.velX[searchResult.arr[i + 6]],
+                                 speeds.velX[searchResult.arr[i + 5]],
+                                 speeds.velX[searchResult.arr[i + 4]],
+                                 speeds.velX[searchResult.arr[i + 3]],
+                                 speeds.velX[searchResult.arr[i + 2]],
+                                 speeds.velX[searchResult.arr[i + 1]],
+                                 speeds.velX[searchResult.arr[i]]);
+            velY = _mm256_set_ps(speeds.velY[searchResult.arr[i + 7]],
+                                 speeds.velY[searchResult.arr[i + 6]],
+                                 speeds.velY[searchResult.arr[i + 5]],
+                                 speeds.velY[searchResult.arr[i + 4]],
+                                 speeds.velY[searchResult.arr[i + 3]],
+                                 speeds.velY[searchResult.arr[i + 2]],
+                                 speeds.velY[searchResult.arr[i + 1]],
+                                 speeds.velY[searchResult.arr[i]]);
+            count += 8; // Assuming no ID matches, adjust if necessary
+        }
+
+        alignmentX = _mm256_add_ps(alignmentX, velX);
+        alignmentY = _mm256_add_ps(alignmentY, velY);
+    }
+
+    // Reduction to scalar
+    float finalAlignmentX = _mm256_cvtss_f32(_mm256_hadd_ps(_mm256_hadd_ps(alignmentX, alignmentX), _mm256_setzero_ps()));
+    float finalAlignmentY = _mm256_cvtss_f32(_mm256_hadd_ps(_mm256_hadd_ps(alignmentY, alignmentY), _mm256_setzero_ps()));
+
+    if (count > 0) {
+        finalAlignmentX -= speeds.velX[id];
+        finalAlignmentY -= speeds.velY[id];
+        --count;
+
+        finalAlignmentX /= count;
+        finalAlignmentY /= count;
+
+        // Adjust based on own velocity
+        finalAlignmentX -= speeds.velX[id];
+        finalAlignmentY -= speeds.velY[id];
+    }
+
+    const float alignmentForce = 1.5f;
+    boids.alignemnts[id].x = finalAlignmentX * alignmentForce;
+    boids.alignemnts[id].y = finalAlignmentY * alignmentForce;
+}
+*/
+
+inline void calcAlign(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
+    __m128 alignemntX = _mm_setzero_ps();
+    __m128 alignemntY = _mm_setzero_ps();
+    __m128 velX, velY;
+
+    float finalAlignmentX = -speeds.velX[id];
+    float finalAlignmentY = -speeds.velY[id];
+
+    int count = -1;
+
+    int i = 0;
+    for (; i + 3 < searchResult.size; i += 4) {
+        velX = _mm_set_ps(
+            speeds.velX[searchResult.arr[i]],
+            speeds.velX[searchResult.arr[i + 1]],
+            speeds.velX[searchResult.arr[i + 2]],
+            speeds.velX[searchResult.arr[i + 3]]);
+
+        velY = _mm_set_ps(
+            speeds.velY[searchResult.arr[i]],
+            speeds.velY[searchResult.arr[i + 1]],
+            speeds.velY[searchResult.arr[i + 2]],
+            speeds.velY[searchResult.arr[i + 3]]);
+
+        alignemntX = _mm_add_ps(alignemntX, velX);
+        alignemntY = _mm_add_ps(alignemntY, velY);
+
+        count += 4;
+    }
+
+    finalAlignmentX = _mm_cvtss_f32(alignemntX);
+    finalAlignmentY = _mm_cvtss_f32(alignemntY);
+
+    for (; i < searchResult.size; ++i) {
+        finalAlignmentX += speeds.velX[i];
+        finalAlignmentY += speeds.velY[i];
+        ++count;
+    }
+
+    finalAlignmentX /= count;
+    finalAlignmentY /= count;
+
+    finalAlignmentX -= speeds.velX[id];
+    finalAlignmentY -= speeds.velY[id];
+
+    boids.alignments[id].x = finalAlignmentX;
+    boids.alignments[id].y = finalAlignmentY;
+}
+
+static inline bool useSSE = false;
 
 inline void calcAlignment(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
     int count = 0;
@@ -39,7 +164,7 @@ inline void calcAlignment(int id, SearchResult &searchResult, SpeedComponent &sp
 
     alignment.x *= alignmentForce;
     alignment.y *= alignmentForce;
-    boids.alignemnts[id] = alignment;
+    boids.alignments[id] = alignment;
 }
 
 inline void calculateAlignments(SearchResult &alignSearch,
@@ -66,7 +191,69 @@ inline void calculateAlignments(SearchResult &alignSearch,
     }
 }
 
-inline void calcSeperation(int id, SearchResult &searchResult, PositionComponent &positions, BoidComponent &boids) {
+inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComponent &positions, BoidComponent &boids) {
+    __m128 separationX = _mm_setzero_ps();
+    __m128 separationY = _mm_setzero_ps();
+    int count = 0;
+
+    for (int i = 0; i < searchResult.size; i += 4) {
+        // Load up to four other boid positions at a time
+        float xPos[4], yPos[4];
+        for (int j = 0; j < 4; ++j) {
+            int idx = i + j;
+            if (idx < searchResult.size) {
+                xPos[j] = positions.xPos[searchResult.arr[idx]];
+                yPos[j] = positions.yPos[searchResult.arr[idx]];
+            } else {
+                // Pad the remaining elements if we've run past the end
+                xPos[j] = positions.xPos[id];
+                yPos[j] = positions.yPos[id];
+            }
+        }
+
+        __m128 otherPosX = _mm_loadu_ps(xPos);
+        __m128 otherPosY = _mm_loadu_ps(yPos);
+        __m128 idPosX = _mm_set1_ps(positions.xPos[id]);
+        __m128 idPosY = _mm_set1_ps(positions.yPos[id]);
+
+        __m128 diffX = _mm_sub_ps(idPosX, otherPosX);
+        __m128 diffY = _mm_sub_ps(idPosY, otherPosY);
+        __m128 distSq = _mm_add_ps(_mm_mul_ps(diffX, diffX), _mm_mul_ps(diffY, diffY));
+        __m128 invDistSq = _mm_div_ps(_mm_set1_ps(1.0f), distSq);
+
+        // Apply the inverse square distance to each component
+        diffX = _mm_mul_ps(diffX, invDistSq);
+        diffY = _mm_mul_ps(diffY, invDistSq);
+
+        separationX = _mm_add_ps(separationX, diffX);
+        separationY = _mm_add_ps(separationY, diffY);
+
+        count += (searchResult.size - i) >= 4 ? 4 : (searchResult.size % 4);
+    }
+
+    // Sum the components of the vectors
+    separationX = _mm_hadd_ps(separationX, separationX);
+    separationX = _mm_hadd_ps(separationX, separationX);
+    separationY = _mm_hadd_ps(separationY, separationY);
+    separationY = _mm_hadd_ps(separationY, separationY);
+
+    float finalSeparationX, finalSeparationY;
+    _mm_store_ss(&finalSeparationX, separationX);
+    _mm_store_ss(&finalSeparationY, separationY);
+
+    if (count > 0) {
+        // Adjust for the actual number of neighbors
+        finalSeparationX /= count;
+        finalSeparationY /= count;
+    }
+
+    // Apply separation force
+    const float separationForce = 10.0f;
+    boids.separations[id].x = finalSeparationX * separationForce;
+    boids.separations[id].y = finalSeparationY * separationForce;
+}
+
+inline void calcSeparation(int id, SearchResult &searchResult, PositionComponent &positions, BoidComponent &boids) {
     int count = 0;
     Vector2 seperation = {0.f, 0.f};
     for (int i = 0; i < searchResult.size; ++i) {
@@ -102,11 +289,11 @@ inline void calcSeperation(int id, SearchResult &searchResult, PositionComponent
     seperation.x *= seperationForce;
     seperation.y *= seperationForce;
 
-    boids.seperations[id].x = seperation.x;
-    boids.seperations[id].y = seperation.y;
+    boids.separations[id].x = seperation.x;
+    boids.separations[id].y = seperation.y;
 }
 
-inline void calcSeperations(SearchResult &seperationSearch,
+inline void calcSeparations(SearchResult &seperationSearch,
                             QuadTree &quadTree,
                             PositionComponent &positions,
                             BoidComponent &boids,
@@ -115,7 +302,7 @@ inline void calcSeperations(SearchResult &seperationSearch,
                             int startIndex,
                             int length) {
     Rectangle separationArea;
-    float seperationSize = 14.f;
+    float seperationSize = 28.f;
     separationArea.width = entityRadius * seperationSize;
     separationArea.height = entityRadius * seperationSize;
 
@@ -125,7 +312,9 @@ inline void calcSeperations(SearchResult &seperationSearch,
         seperationSearch.clear();
         quadTree.search(separationArea, positions, seperationSearch, entityRadius);
 
-        calcSeperation(i, seperationSearch, positions, boids);
+        if (seperationSearch.size > 1) {
+            calcSeparation(i, seperationSearch, positions, boids);
+        }
     }
 }
 
@@ -152,7 +341,7 @@ inline void calcCohesion(int id, SearchResult &searchResult, PositionComponent &
         cohesion.y -= positions.yPos[id];
     }
 
-    const float cohesionForce = 0.0015f;
+    const float cohesionForce = 0.0060f;
     cohesion.x *= cohesionForce;
     cohesion.y *= cohesionForce;
 
@@ -170,7 +359,7 @@ inline void calcCohesions(
     int length) {
 
     Rectangle cohesionArea;
-    float cohesionSize = 20.f;
+    float cohesionSize = 40.f;
     cohesionArea.width = entityRadius * cohesionSize;
     cohesionArea.height = entityRadius * cohesionSize;
 
@@ -185,8 +374,8 @@ inline void calcCohesions(
 
 inline void addForces(int startIndex, int length, SpeedComponent &speeds, BoidComponent &boids) {
     for (int i = startIndex; i < (startIndex + length); ++i) {
-        Vector2 alignment = boids.alignemnts[i];
-        Vector2 seperation = boids.seperations[i];
+        Vector2 alignment = boids.alignments[i];
+        Vector2 seperation = boids.separations[i];
         Vector2 cohesion = boids.cohesions[i];
 
         Vector2 acceleration = {
@@ -208,14 +397,17 @@ inline void addForces(int startIndex, int length, SpeedComponent &speeds, BoidCo
     }
 }
 
+inline void addForcesSSE(int startIndex, int length, SpeedComponent &speeds, BoidComponent &boids) {
+}
+
 struct MfBoidSystem {
-    bool isEnabled = true;
-    bool alignemntEnabled = false;
-    bool seperationEnabled = false;
+    bool isEnabled = false;
+    bool alignmentEnabled = false;
+    bool separationEnabled = false;
     bool cohesionEnabled = false;
 
     SearchResult alignSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
-    SearchResult seperationSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+    SearchResult separationSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
     SearchResult cohesionSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
 
     int currentIndex = 0;
@@ -231,27 +423,26 @@ struct MfBoidSystem {
             return;
         }
 
-        if (currentIndex == settings.MAX_ENTITIES) {
-            currentIndex = 0;
-        }
+        int batchSize = settings.MAX_ENTITIES / 1;
 
-        int batchSize = settings.MAX_ENTITIES / 4;
-        int batch = currentIndex + batchSize;
-
-        if (batch >= settings.MAX_ENTITIES) {
-            batch = settings.MAX_ENTITIES;
+        int batchEnd = currentIndex + batchSize;
+        if (batchEnd > settings.MAX_ENTITIES) {
+            batchEnd = settings.MAX_ENTITIES;
         }
 
         int numberOfThreads = 8;
-        int length = batchSize / numberOfThreads;
-        int startIndex = currentIndex;
+        int totalBatchSize = batchEnd - currentIndex;
+        int lengthPerThread = totalBatchSize / numberOfThreads;
+        int extra = totalBatchSize % numberOfThreads;
 
-        currentIndex += batchSize;
-
-        if (seperationEnabled) {
+        if (separationEnabled) {
+            int startIndex = 0;
+            int length = 0;
             for (int i = 0; i < numberOfThreads; ++i) {
-                threadPool.enqueue(calcSeperations,
-                                   std::ref(seperationSearch[i]),
+                startIndex = currentIndex + i * lengthPerThread;
+                length = (i < numberOfThreads - 1) ? lengthPerThread : lengthPerThread + extra;
+                threadPool.enqueue(calcSeparations,
+                                   std::ref(separationSearch[i]),
                                    std::ref(tree),
                                    std::ref(positions),
                                    std::ref(boids),
@@ -259,13 +450,16 @@ struct MfBoidSystem {
                                    settings.ZOMBIE_RADIUS,
                                    startIndex,
                                    length);
-                startIndex += length;
             }
         }
 
-        startIndex = 0;
-        if (alignemntEnabled) {
+        if (alignmentEnabled) {
+            int startIndex = 0;
+            int length = 0;
             for (int i = 0; i < numberOfThreads; ++i) {
+                startIndex = currentIndex + (i * lengthPerThread);
+                length = (i < numberOfThreads - 1) ? lengthPerThread : lengthPerThread + extra;
+
                 threadPool.enqueue(calculateAlignments,
                                    std::ref(alignSearch[i]),
                                    std::ref(tree),
@@ -276,13 +470,15 @@ struct MfBoidSystem {
                                    settings.ZOMBIE_RADIUS,
                                    startIndex,
                                    length);
-                startIndex += length;
             }
         }
 
-        startIndex = 0;
         if (cohesionEnabled) {
+            int startIndex = 0;
+            int length = 0;
             for (int i = 0; i < numberOfThreads; ++i) {
+                startIndex = currentIndex + i * lengthPerThread;
+                length = (i < numberOfThreads - 1) ? lengthPerThread : lengthPerThread + extra;
                 threadPool.enqueue(calcCohesions,
                                    std::ref(cohesionSearch[i]),
                                    std::ref(tree),
@@ -292,19 +488,25 @@ struct MfBoidSystem {
                                    settings.ZOMBIE_RADIUS,
                                    startIndex,
                                    length);
-                startIndex += length;
             }
         }
 
         threadPool.awaitCompletion();
 
-        startIndex = 0;
         for (int i = 0; i < numberOfThreads; ++i) {
+            int startIndex = currentIndex + i * lengthPerThread;
+            int length = (i < numberOfThreads - 1) ? lengthPerThread : lengthPerThread + extra;
+
             threadPool.enqueue(addForces, startIndex, length, std::ref(speeds), std::ref(boids));
-            startIndex += length;
         }
 
-        // threadPool.awaitCompletion();
+        threadPool.awaitCompletion();
+
+        currentIndex += totalBatchSize;
+
+        if (currentIndex >= settings.MAX_ENTITIES) {
+            currentIndex = 0;
+        }
     }
 };
 

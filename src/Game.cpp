@@ -98,9 +98,9 @@ void Game::handleInputSystems() {
     } else if (IsKeyPressed(KEY_B)) {
         m_boidSystem.isEnabled = !m_boidSystem.isEnabled;
     } else if (IsKeyPressed(KEY_ONE)) {
-        m_boidSystem.alignemntEnabled = !m_boidSystem.alignemntEnabled;
+        m_boidSystem.alignmentEnabled = !m_boidSystem.alignmentEnabled;
     } else if (IsKeyPressed(KEY_TWO)) {
-        m_boidSystem.seperationEnabled = !m_boidSystem.seperationEnabled;
+        m_boidSystem.separationEnabled = !m_boidSystem.separationEnabled;
     } else if (IsKeyPressed(KEY_THREE)) {
         m_boidSystem.cohesionEnabled = !m_boidSystem.cohesionEnabled;
     }
@@ -111,14 +111,12 @@ void Game::handleUpdateSystems(float dt) {
 
     if (currentIndex >= (m_settings.MAX_ENTITIES - 1)) {
 
+        m_boidSystem.update(m_settings, m_threadPool, m_tree, m_positions, m_speeds, m_boids);
+        m_moveSystem.update(m_positions, m_speeds, m_threadPool);
+        m_threadPool.awaitCompletion();
+
         m_dynamicTreeSystem.update(m_settings, m_positions, m_tree, m_simpleOutOfBoundsSystem.entitiesOutOfBounds);
         m_simpleOutOfBoundsSystem.update(m_settings, m_tree, m_dynamicTreeSystem, m_positions, m_world);
-
-        m_boidSystem.update(m_settings, m_threadPool, m_tree, m_positions, m_speeds, m_boids);
-
-        m_moveSystem.update(m_positions, m_speeds, m_threadPool);
-
-        m_threadPool.awaitCompletion();
         return;
     }
 
@@ -216,11 +214,11 @@ void Game::drawUi() const {
     DrawText(boidsSystem.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 
-    std::string alignment = "alignment: " + std::to_string(m_boidSystem.alignemntEnabled);
+    std::string alignment = "alignment: " + std::to_string(m_boidSystem.alignmentEnabled);
     DrawText(alignment.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 
-    std::string seperation = "seperation: " + std::to_string(m_boidSystem.seperationEnabled);
+    std::string seperation = "seperation: " + std::to_string(m_boidSystem.separationEnabled);
     DrawText(seperation.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 

@@ -47,7 +47,7 @@ struct QuadTree {
             halfWidth, halfHeight};
     }
 
-    void add(const int &entityId, const Rectangle &entityRect, std::vector<QuadTree *> &entityToTreeLookup, std::vector<int> &entityToTreeIndexLookup, std::vector<int>& entitiesOutOfBounds) {
+    void add(const int &entityId, const Rectangle &entityRect, std::vector<QuadTree *> &entityToTreeLookup, std::vector<int> &entityToTreeIndexLookup, std::vector<int> &entitiesOutOfBounds) {
 
         if (level == 0) {
             if (!rectangleContains(rect, entityRect)) {
@@ -98,9 +98,13 @@ struct QuadTree {
 
     void search(const Rectangle &area, const PositionComponent &position, SearchResult &searchResult, const float radius) {
 
+        zombieRect.width = radius * 2.f;
+        zombieRect.height = radius * 2.f;
+
         for (const auto &entityID : entities) {
-            Vector2 pos = {position.xPos[entityID], position.yPos[entityID]};
-            zombieRect = {pos.x, pos.y, radius * 2, radius * 2};
+            zombieRect.x = position.xPos[entityID];
+            zombieRect.y = position.yPos[entityID];
+
             if (rectangleOverlaps(area, zombieRect)) {
                 searchResult.add(entityID);
             }
@@ -129,9 +133,9 @@ struct QuadTree {
         }
     }
 
-    void draw(Rectangle& cameraRect) const {
-        
-        if((!entities.empty() && rectangleOverlaps(cameraRect, rect)) || level == 0){
+    void draw(Rectangle &cameraRect) const {
+
+        if ((!entities.empty() && rectangleOverlaps(cameraRect, rect)) || level == 0) {
             Color c = (level % 2) == 0 ? RAYWHITE : YELLOW;
             DrawRectangleLinesEx(rect, 10.f, c);
         }

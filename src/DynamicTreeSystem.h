@@ -26,7 +26,7 @@ struct DynamicTreeSystem {
     DynamicTreeSystem(Settings &settings) : entityToTreeLookup(settings.MAX_ENTITIES),
                                             entitiesToReinsert(settings.MAX_ENTITIES),
                                             currentIndex(0),
-                                            batchSize(settings.MAX_ENTITIES / 1) {
+                                            batchSize(settings.MAX_ENTITIES / 2) {
         entityToTreeIndexlookup.resize(settings.MAX_ENTITIES);
     }
 

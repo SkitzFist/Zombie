@@ -4,11 +4,12 @@
 #include "ComponentTypes.h"
 
 struct Settings {
-    const int MAX_ENTITIES = 1000000;
+    const bool big = false;
+    const int MAX_ENTITIES = big ? 1000000 : 100;
     const int MAX_COMPONENTS = (int)ComponentTypes::COUNT;
 
-    const float ZOMBIE_RADIUS = 64;
-    const int WORLD_SCALE = 1000;
+    const float ZOMBIE_RADIUS = big ? 64 : 8;
+    const int WORLD_SCALE = big ? 500 : 1;
 };
 
 #endif
