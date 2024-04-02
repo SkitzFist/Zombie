@@ -103,6 +103,8 @@ void Game::handleInputSystems() {
         m_boidSystem.separationEnabled = !m_boidSystem.separationEnabled;
     } else if (IsKeyPressed(KEY_THREE)) {
         m_boidSystem.cohesionEnabled = !m_boidSystem.cohesionEnabled;
+    } else if (IsKeyPressed(KEY_E)) {
+        useSSE = !useSSE;
     }
 }
 
@@ -224,5 +226,9 @@ void Game::drawUi() const {
 
     std::string cohesion = "cohesion: " + std::to_string(m_boidSystem.cohesionEnabled);
     DrawText(cohesion.c_str(), xPos, cSpacing, fontSize, WHITE);
+    cSpacing += spacing;
+
+    std::string sse = "SSE: " + std::to_string(useSSE);
+    DrawText(sse.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 }

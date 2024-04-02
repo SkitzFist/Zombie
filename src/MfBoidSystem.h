@@ -58,7 +58,7 @@ inline void calcAlignmentAVX2(int id, SearchResult &searchResult, SpeedComponent
                                  speeds.velY[searchResult.arr[i + 2]],
                                  speeds.velY[searchResult.arr[i + 1]],
                                  speeds.velY[searchResult.arr[i]]);
-            count += 8; // Assuming no ID matches, adjust if necessary
+            count += 8;
         }
 
         alignmentX = _mm256_add_ps(alignmentX, velX);
@@ -88,10 +88,11 @@ inline void calcAlignmentAVX2(int id, SearchResult &searchResult, SpeedComponent
 }
 */
 
-inline void calcAlign(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
-    __m128 alignemntX = _mm_setzero_ps();
-    __m128 alignemntY = _mm_setzero_ps();
-    __m128 velX, velY;
+inline void calcAlignmentSSE(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
+    __m128 alignmentX = _mm_setzero_ps();
+    __m128 alignmentY = _mm_setzero_ps();
+    __m128 velX = _mm_setzero_ps();
+    __m128 velY = _mm_setzero_ps();
 
     float finalAlignmentX = -speeds.velX[id];
     float finalAlignmentY = -speeds.velY[id];
@@ -112,32 +113,36 @@ inline void calcAlign(int id, SearchResult &searchResult, SpeedComponent &speeds
             speeds.velY[searchResult.arr[i + 2]],
             speeds.velY[searchResult.arr[i + 3]]);
 
-        alignemntX = _mm_add_ps(alignemntX, velX);
-        alignemntY = _mm_add_ps(alignemntY, velY);
+        alignmentX = _mm_add_ps(alignmentX, velX);
+        alignmentY = _mm_add_ps(alignmentY, velY);
 
         count += 4;
     }
 
-    finalAlignmentX = _mm_cvtss_f32(alignemntX);
-    finalAlignmentY = _mm_cvtss_f32(alignemntY);
+    alignmentX = _mm_hadd_ps(alignmentX, alignmentX);
+    alignmentX = _mm_hadd_ps(alignmentX, alignmentX);
+    finalAlignmentX = _mm_cvtss_f32(alignmentX);
+
+    alignmentY = _mm_hadd_ps(alignmentY, alignmentY);
+    alignmentY = _mm_hadd_ps(alignmentY, alignmentY);
+    finalAlignmentY = _mm_cvtss_f32(alignmentY);
 
     for (; i < searchResult.size; ++i) {
-        finalAlignmentX += speeds.velX[i];
-        finalAlignmentY += speeds.velY[i];
+        finalAlignmentX += speeds.velX[searchResult.arr[i]];
+        finalAlignmentY += speeds.velY[searchResult.arr[i]];
         ++count;
     }
 
     finalAlignmentX /= count;
     finalAlignmentY /= count;
 
-    finalAlignmentX -= speeds.velX[id];
-    finalAlignmentY -= speeds.velY[id];
+    const float alignmentForce = 0.75f;
+    finalAlignmentX *= alignmentForce;
+    finalAlignmentY *= alignmentForce;
 
     boids.alignments[id].x = finalAlignmentX;
     boids.alignments[id].y = finalAlignmentY;
 }
-
-static inline bool useSSE = false;
 
 inline void calcAlignment(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
     int count = 0;
@@ -153,19 +158,17 @@ inline void calcAlignment(int id, SearchResult &searchResult, SpeedComponent &sp
         ++count;
     }
 
-    if (count > 0) {
-        alignment.x /= count;
-        alignment.y /= count;
+    alignment.x /= count;
+    alignment.y /= count;
 
-        alignment.x -= speeds.velX[id];
-        alignment.y -= speeds.velY[id];
-    }
     const float alignmentForce = 0.75f;
 
     alignment.x *= alignmentForce;
     alignment.y *= alignmentForce;
     boids.alignments[id] = alignment;
 }
+
+inline static bool useSSE = false;
 
 inline void calculateAlignments(SearchResult &alignSearch,
                                 QuadTree &quadTree,
@@ -187,7 +190,13 @@ inline void calculateAlignments(SearchResult &alignSearch,
         alignSearch.clear();
         quadTree.search(alignArea, positions, alignSearch, entityRadius);
 
-        calcAlignment(i, alignSearch, speeds, boids);
+        if (alignSearch.size > 1) {
+            if (useSSE) {
+                calcAlignmentSSE(i, alignSearch, speeds, boids);
+            } else {
+                calcAlignment(i, alignSearch, speeds, boids);
+            }
+        }
     }
 }
 
@@ -197,7 +206,6 @@ inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComp
     int count = 0;
 
     for (int i = 0; i < searchResult.size; i += 4) {
-        // Load up to four other boid positions at a time
         float xPos[4], yPos[4];
         for (int j = 0; j < 4; ++j) {
             int idx = i + j;
@@ -205,7 +213,6 @@ inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComp
                 xPos[j] = positions.xPos[searchResult.arr[idx]];
                 yPos[j] = positions.yPos[searchResult.arr[idx]];
             } else {
-                // Pad the remaining elements if we've run past the end
                 xPos[j] = positions.xPos[id];
                 yPos[j] = positions.yPos[id];
             }
@@ -221,7 +228,6 @@ inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComp
         __m128 distSq = _mm_add_ps(_mm_mul_ps(diffX, diffX), _mm_mul_ps(diffY, diffY));
         __m128 invDistSq = _mm_div_ps(_mm_set1_ps(1.0f), distSq);
 
-        // Apply the inverse square distance to each component
         diffX = _mm_mul_ps(diffX, invDistSq);
         diffY = _mm_mul_ps(diffY, invDistSq);
 
@@ -231,7 +237,6 @@ inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComp
         count += (searchResult.size - i) >= 4 ? 4 : (searchResult.size % 4);
     }
 
-    // Sum the components of the vectors
     separationX = _mm_hadd_ps(separationX, separationX);
     separationX = _mm_hadd_ps(separationX, separationX);
     separationY = _mm_hadd_ps(separationY, separationY);
@@ -242,12 +247,10 @@ inline void calcSeparationSSE41(int id, SearchResult &searchResult, PositionComp
     _mm_store_ss(&finalSeparationY, separationY);
 
     if (count > 0) {
-        // Adjust for the actual number of neighbors
         finalSeparationX /= count;
         finalSeparationY /= count;
     }
 
-    // Apply separation force
     const float separationForce = 10.0f;
     boids.separations[id].x = finalSeparationX * separationForce;
     boids.separations[id].y = finalSeparationY * separationForce;
@@ -279,12 +282,10 @@ inline void calcSeparation(int id, SearchResult &searchResult, PositionComponent
         ++count;
     }
 
-    if (count > 0) {
-        seperation.x /= count;
-        seperation.y /= count;
-    }
+    seperation.x /= count;
+    seperation.y /= count;
 
-    const float seperationForce = 5.f;
+    const float seperationForce = 10.f;
 
     seperation.x *= seperationForce;
     seperation.y *= seperationForce;
@@ -318,6 +319,65 @@ inline void calcSeparations(SearchResult &seperationSearch,
     }
 }
 
+inline void calcCohesionSSE(int id, SearchResult &searchResult, PositionComponent &positions, BoidComponent &boids) {
+    __m128 cohesionX = _mm_setzero_ps();
+    __m128 cohesionY = _mm_setzero_ps();
+    __m128 posX = _mm_setzero_ps();
+    __m128 posY = _mm_setzero_ps();
+
+    float finalCohesionX = -positions.xPos[id];
+    float finalCohesionY = -positions.yPos[id];
+
+    int count = 0;
+
+    int i = 0;
+    for (; i + 3 < searchResult.size; i += 4) {
+        posX = _mm_set_ps(
+            positions.xPos[searchResult.arr[i]],
+            positions.xPos[searchResult.arr[i + 1]],
+            positions.xPos[searchResult.arr[i + 2]],
+            positions.xPos[searchResult.arr[i + 3]]);
+
+        posY = _mm_set_ps(
+            positions.yPos[searchResult.arr[i]],
+            positions.yPos[searchResult.arr[i + 1]],
+            positions.yPos[searchResult.arr[i + 2]],
+            positions.yPos[searchResult.arr[i + 3]]);
+
+        cohesionX = _mm_add_ps(cohesionX, posX);
+        cohesionY = _mm_add_ps(cohesionY, posY);
+
+        count += 4;
+    }
+
+    cohesionX = _mm_hadd_ps(cohesionX, cohesionX);
+    cohesionX = _mm_hadd_ps(cohesionX, cohesionX);
+    finalCohesionX = _mm_cvtss_f32(cohesionX);
+
+    cohesionY = _mm_hadd_ps(cohesionY, cohesionY);
+    cohesionY = _mm_hadd_ps(cohesionY, cohesionY);
+    finalCohesionY = _mm_cvtss_f32(cohesionY);
+
+    for (; i < searchResult.size; ++i) {
+        finalCohesionX += positions.xPos[searchResult.arr[i]];
+        finalCohesionY += positions.yPos[searchResult.arr[i]];
+        ++count;
+    }
+
+    finalCohesionX /= count;
+    finalCohesionY /= count;
+
+    finalCohesionX -= positions.xPos[id];
+    finalCohesionY -= positions.yPos[id];
+
+    const float cohesionForce = 0.0060f;
+    finalCohesionX *= cohesionForce;
+    finalCohesionY *= cohesionForce;
+
+    boids.cohesions[id].x = finalCohesionX;
+    boids.cohesions[id].y = finalCohesionY;
+}
+
 inline void calcCohesion(int id, SearchResult &searchResult, PositionComponent &positions, BoidComponent &boids) {
     Vector2 cohesion = {0.f, 0.f};
     int count = 0;
@@ -333,13 +393,11 @@ inline void calcCohesion(int id, SearchResult &searchResult, PositionComponent &
         ++count;
     }
 
-    if (count > 0) {
-        cohesion.x /= count;
-        cohesion.y /= count;
+    cohesion.x /= count;
+    cohesion.y /= count;
 
-        cohesion.x -= positions.xPos[id];
-        cohesion.y -= positions.yPos[id];
-    }
+    cohesion.x -= positions.xPos[id];
+    cohesion.y -= positions.yPos[id];
 
     const float cohesionForce = 0.0060f;
     cohesion.x *= cohesionForce;
@@ -366,9 +424,17 @@ inline void calcCohesions(
     for (int i = startIndex; i < (startIndex + length); ++i) {
         cohesionArea.x = positions.xPos[i] - ((cohesionArea.width / 2.f) - entityRadius);
         cohesionArea.y = positions.yPos[i] - ((cohesionArea.height / 2.f) - entityRadius);
+
         cohesionSearch.clear();
         quadTree.search(cohesionArea, positions, cohesionSearch, entityRadius);
-        calcCohesion(i, cohesionSearch, positions, boids);
+
+        if (cohesionSearch.size > 1) {
+            if (useSSE) {
+                calcCohesionSSE(i, cohesionSearch, positions, boids);
+            } else {
+                calcCohesion(i, cohesionSearch, positions, boids);
+            }
+        }
     }
 }
 
@@ -397,9 +463,6 @@ inline void addForces(int startIndex, int length, SpeedComponent &speeds, BoidCo
     }
 }
 
-inline void addForcesSSE(int startIndex, int length, SpeedComponent &speeds, BoidComponent &boids) {
-}
-
 struct MfBoidSystem {
     bool isEnabled = false;
     bool alignmentEnabled = false;
@@ -423,7 +486,7 @@ struct MfBoidSystem {
             return;
         }
 
-        int batchSize = settings.MAX_ENTITIES / 1;
+        int batchSize = settings.big ? settings.MAX_ENTITIES / 30 : settings.MAX_ENTITIES / 1;
 
         int batchEnd = currentIndex + batchSize;
         if (batchEnd > settings.MAX_ENTITIES) {
