@@ -15,7 +15,6 @@
 #include "raylib.h"
 
 // debug
-
 #include "Log.hpp"
 /*
 inline void calcAlignmentAVX2(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
@@ -88,6 +87,8 @@ inline void calcAlignmentAVX2(int id, SearchResult &searchResult, SpeedComponent
 }
 */
 
+inline static bool useSSE = false;
+
 inline void calcAlignmentSSE(int id, SearchResult &searchResult, SpeedComponent &speeds, BoidComponent &boids) {
     __m128 alignmentX = _mm_setzero_ps();
     __m128 alignmentY = _mm_setzero_ps();
@@ -136,7 +137,7 @@ inline void calcAlignmentSSE(int id, SearchResult &searchResult, SpeedComponent 
     finalAlignmentX /= count;
     finalAlignmentY /= count;
 
-    const float alignmentForce = 0.75f;
+    const float alignmentForce = 0.35f;
     finalAlignmentX *= alignmentForce;
     finalAlignmentY *= alignmentForce;
 
@@ -168,8 +169,6 @@ inline void calcAlignment(int id, SearchResult &searchResult, SpeedComponent &sp
     boids.alignments[id] = alignment;
 }
 
-inline static bool useSSE = false;
-
 inline void calculateAlignments(SearchResult &alignSearch,
                                 QuadTree &quadTree,
                                 PositionComponent &positions,
@@ -191,11 +190,7 @@ inline void calculateAlignments(SearchResult &alignSearch,
         quadTree.search(alignArea, positions, alignSearch, entityRadius);
 
         if (alignSearch.size > 1) {
-            if (useSSE) {
-                calcAlignmentSSE(i, alignSearch, speeds, boids);
-            } else {
-                calcAlignment(i, alignSearch, speeds, boids);
-            }
+            calcAlignmentSSE(i, alignSearch, speeds, boids);
         }
     }
 }
@@ -429,11 +424,7 @@ inline void calcCohesions(
         quadTree.search(cohesionArea, positions, cohesionSearch, entityRadius);
 
         if (cohesionSearch.size > 1) {
-            if (useSSE) {
-                calcCohesionSSE(i, cohesionSearch, positions, boids);
-            } else {
-                calcCohesion(i, cohesionSearch, positions, boids);
-            }
+            calcCohesionSSE(i, cohesionSearch, positions, boids);
         }
     }
 }
@@ -469,9 +460,9 @@ struct MfBoidSystem {
     bool separationEnabled = false;
     bool cohesionEnabled = false;
 
-    SearchResult alignSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
-    SearchResult separationSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
-    SearchResult cohesionSearch[8] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+    SearchResult alignSearch[16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+    SearchResult separationSearch[16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+    SearchResult cohesionSearch[16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
 
     int currentIndex = 0;
 
@@ -486,14 +477,14 @@ struct MfBoidSystem {
             return;
         }
 
-        int batchSize = settings.big ? settings.MAX_ENTITIES / 30 : settings.MAX_ENTITIES / 1;
+        int batchSize = settings.big ? settings.MAX_ENTITIES / 45 : settings.MAX_ENTITIES / 1;
 
         int batchEnd = currentIndex + batchSize;
         if (batchEnd > settings.MAX_ENTITIES) {
             batchEnd = settings.MAX_ENTITIES;
         }
 
-        int numberOfThreads = 8;
+        int numberOfThreads = 16;
         int totalBatchSize = batchEnd - currentIndex;
         int lengthPerThread = totalBatchSize / numberOfThreads;
         int extra = totalBatchSize % numberOfThreads;

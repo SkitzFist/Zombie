@@ -8,7 +8,7 @@ CameraInput::CameraInput() : m_speed(1000),
                              m_minSpeed(1),
                              m_maxSpeed(1000),
                              m_maxZoom(3.f),
-                             m_minZoom(0.01f) {
+                             m_minZoom(0.005f) {
 }
 
 void CameraInput::handleInput(Camera2D &camera) {
@@ -24,8 +24,8 @@ void CameraInput::handleZoom(Camera2D &camera) {
 
     // Get the current world position of the mouse before zooming
     Vector2 prevMouseWorldPos = GetScreenToWorld2D(GetMousePosition(), camera);
-    
-    float zoomStrength = camera.zoom > 0.03f ?  0.025f : 0.005f;
+
+    float zoomStrength = camera.zoom > 0.03f ? 0.01f : 0.005f;
     float zoom = mouseWheel < 0 ? -zoomStrength : zoomStrength;
     camera.zoom += zoom;
 

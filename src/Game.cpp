@@ -21,7 +21,7 @@ Game::Game(int screenWidth, int screenHeight, bool isFullscreen) : m_settings(),
                                                                    m_camera(),
                                                                    m_tree(0, {0, 0, (float)screenWidth * m_settings.WORLD_SCALE, (float)screenHeight * m_settings.WORLD_SCALE}),
                                                                    m_searchResult(m_settings.MAX_ENTITIES),
-                                                                   m_threadPool(8),
+                                                                   m_threadPool(16),
                                                                    m_positions(m_settings),
                                                                    m_speeds(m_settings),
                                                                    m_boids(m_settings),
@@ -103,8 +103,6 @@ void Game::handleInputSystems() {
         m_boidSystem.separationEnabled = !m_boidSystem.separationEnabled;
     } else if (IsKeyPressed(KEY_THREE)) {
         m_boidSystem.cohesionEnabled = !m_boidSystem.cohesionEnabled;
-    } else if (IsKeyPressed(KEY_E)) {
-        useSSE = !useSSE;
     }
 }
 
@@ -156,7 +154,7 @@ void Game::handleRenderSystems() {
 
     Rectangle cameraRect = getCameraRect();
 
-    if (IsKeyDown(KEY_LEFT_CONTROL)) {
+    if (IsKeyDown(KEY_LEFT_SHIFT)) {
         m_tree.draw(cameraRect);
     }
 
@@ -192,7 +190,7 @@ void Game::drawUi() const {
     int cSpacing = spacing / 3;
     int xPos = 10;
 
-    std::string fpsStr = std::to_string(GetFPS());
+    std::string fpsStr = "FPS: " + std::to_string(GetFPS());
     DrawText(fpsStr.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 
@@ -226,9 +224,5 @@ void Game::drawUi() const {
 
     std::string cohesion = "cohesion: " + std::to_string(m_boidSystem.cohesionEnabled);
     DrawText(cohesion.c_str(), xPos, cSpacing, fontSize, WHITE);
-    cSpacing += spacing;
-
-    std::string sse = "SSE: " + std::to_string(useSSE);
-    DrawText(sse.c_str(), xPos, cSpacing, fontSize, WHITE);
     cSpacing += spacing;
 }
