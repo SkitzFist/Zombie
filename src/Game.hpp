@@ -1,18 +1,27 @@
 #ifndef _Game
 #define _Game
 
-#include "raylib.h"
-#include "World.hpp"
 #include "CameraInput.hpp"
-#include "PositionComponent.h"
+#include "ThreadPool.h"
+#include "World.hpp"
+#include "raylib.h"
+
 #include "QuadTree.h"
 #include "SearchResult.h"
-#include "ZombieFactory.h"
-#include "MoveSystem.h"
-#include "ThreadPool.h"
 
-class Game{
-public:
+#include "BoidComponent.h"
+#include "PositionComponent.h"
+#include "SpeedComponent.h"
+
+#include "ZombieFactory.h"
+
+#include "DynamicTreeSystem.h"
+#include "MfBoidSystem.h"
+#include "MoveSystem.h"
+#include "SimpleOutOfBoundsSystem.h"
+
+class Game {
+  public:
     Game(int screenWidth, int screenHeight, bool isFullscreen);
     ~Game();
 
@@ -21,28 +30,38 @@ public:
     void run();
     void webRun();
 
-private:
+  private:
     Settings m_settings;
     WorldBounds m_world;
     Camera2D m_camera;
     CameraInput m_cameraInput;
+
     QuadTree m_tree;
-    PositionComponent positionComponent;
+
     SearchResult m_searchResult;
+    ThreadPool m_threadPool;
+
+    PositionComponent m_positions;
+    SpeedComponent m_speeds;
+    BoidComponent m_boids;
+
     RenderTexture2D m_renderTexture;
     ZombieFactory m_zombieFactory;
+
+    DynamicTreeSystem m_dynamicTreeSystem;
     MoveSystem m_moveSystem;
-    ThreadPool m_threadPool;
+    SimpleOutOfBoundSystem m_simpleOutOfBoundsSystem;
+    MfBoidSystem m_boidSystem;
 
     void handleInputSystems();
     void handleUpdateSystems(const float dt);
     void handleRenderSystems();
 
-    void drawGrid() const; //debug, should be its own system
+    void drawGrid() const; // debug, should be its own system
     void drawUi() const;
     void drawZombie();
 
-    //debug
+    // debug
     Rectangle getCameraRect() const;
 
     int currentIndex = 0;

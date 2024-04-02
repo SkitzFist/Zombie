@@ -1,11 +1,13 @@
 #ifndef ZOMBIE_SEARCH_RESULT_H_
 #define ZOMBIE_SEARCH_RESULT_H_
 
+#include "Log.hpp"
+
 struct SearchResult {
     int size;
     int *arr;
-
-    SearchResult(int maxSize) : size(0) {
+    const int MAX_SIZE;
+    SearchResult(int maxSize) : size(0), MAX_SIZE(maxSize) {
         arr = new int[maxSize];
     }
 
@@ -14,6 +16,9 @@ struct SearchResult {
     }
 
     void add(int entityID) {
+        if(size == MAX_SIZE){
+            Log::info("SEARCH RESULT : MAX SIZE REACHED, DO SOMETHING ABOUT IT NOW!");
+        }
         arr[size++] = entityID;
     }
 

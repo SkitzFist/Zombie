@@ -20,7 +20,7 @@ struct QuadTree {
     int level;
     Rectangle rect;
 
-    std::array<std::unique_ptr<QuadTree>, 4> children;
+    std::array<std::shared_ptr<QuadTree>, 4> children;
     Rectangle childRects[4];
 
     std::vector<int> entities;
@@ -47,27 +47,43 @@ struct QuadTree {
             halfWidth, halfHeight};
     }
 
-    void add(const int &entityId, const Rectangle &entityRect) {
+    void add(const int &entityId, const Rectangle &entityRect, std::vector<QuadTree *> &entityToTreeLookup, std::vector<int> &entityToTreeIndexLookup, std::vector<int> &entitiesOutOfBounds) {
+
+        if (level == 0) {
+            if (!rectangleContains(rect, entityRect)) {
+                entitiesOutOfBounds.push_back(entityId);
+                entityToTreeLookup[entityId] = nullptr;
+                entityToTreeIndexLookup[entityId] = -1;
+                return;
+            }
+        }
+
         if (level == MAX_LEVEL) {
             entities.push_back(entityId);
+            entityToTreeLookup[entityId] = this;
+            entityToTreeIndexLookup[entityId] = entities.size() - 1;
             return;
         }
 
         for (size_t i = 0; i < children.size(); ++i) {
             // if child exists and fits entirely, add it to child
-            if (children[i] && rectangleContains(children[i]->rect, entityRect)) {
-                children[i]->add(entityId, entityRect);
+            if (children[i] && rectangleOverlaps(children[i]->rect, entityRect)) {
+                children[i]->add(entityId, entityRect, entityToTreeLookup, entityToTreeIndexLookup, entitiesOutOfBounds);
                 return;
-            } else if (rectangleContains(childRects[i], entityRect)) {
-                // if entity fits inside child but it doesn ot exist, create child and add entity
-                children[i] = std::make_unique<QuadTree>(level + 1, childRects[i]);
-                children[i]->add(entityId, entityRect);
+            } else if (rectangleOverlaps(childRects[i], entityRect)) {
+                // if entity fits inside child but child it does not exist, create child and add entity
+                children[i] = std::make_shared<QuadTree>(level + 1, childRects[i]);
+                children[i]->add(entityId, entityRect, entityToTreeLookup, entityToTreeIndexLookup, entitiesOutOfBounds);
                 return;
             }
         }
 
+        /*
         // if no child can contain entity, add to this node
         entities.push_back(entityId);
+        entityToTreeLookup[entityId] = this;
+        entityToTreeIndexLookup[entityId] = entities.size() - 1;
+        */
     }
 
     void clear() {
@@ -80,13 +96,16 @@ struct QuadTree {
         }
     }
 
-    
-    void search(const Rectangle &area, const PositionComponent &position, SearchResult &searchResult, const float radius){
+    void search(const Rectangle &area, const PositionComponent &position, SearchResult &searchResult, const float radius) {
+
+        zombieRect.width = radius * 2.f;
+        zombieRect.height = radius * 2.f;
 
         for (const auto &entityID : entities) {
-            Vector2 pos = position.getPositionByIndex(entityID);
-            zombieRect = {pos.x - radius, pos.y - radius, radius*2, radius*2};
-            if(rectangleOverlaps(area, zombieRect)){
+            zombieRect.x = position.xPos[entityID];
+            zombieRect.y = position.yPos[entityID];
+
+            if (rectangleOverlaps(area, zombieRect)) {
                 searchResult.add(entityID);
             }
         }
@@ -114,14 +133,16 @@ struct QuadTree {
         }
     }
 
-    void draw() const {
+    void draw(Rectangle &cameraRect) const {
 
-        Color c = (level % 2) == 0 ? RAYWHITE : YELLOW;
-        DrawRectangleLinesEx(rect, 10.f, c);
+        if ((!entities.empty() && rectangleOverlaps(cameraRect, rect)) || level == 0) {
+            Color c = (level % 2) == 0 ? RAYWHITE : YELLOW;
+            DrawRectangleLinesEx(rect, 10.f, c);
+        }
 
         for (size_t i = 0; i < children.size(); ++i) {
             if (children[i]) {
-                children[i]->draw();
+                children[i]->draw(cameraRect);
             }
         }
     }
