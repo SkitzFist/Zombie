@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
-project(recept CXX C)
+project(ZombieGame CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Release)
 
-project(ZombieGame)
-
 include(FetchContent)
+
 # Adding Raylib
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
 set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # don't build the supplied example games

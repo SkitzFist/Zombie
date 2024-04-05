@@ -64,7 +64,6 @@ Game::~Game() {
 
 void Game::run() {
     while (!WindowShouldClose()) {
-        m_threadPool.awaitCompletion();
         float dt = GetFrameTime();
         handleInputSystems();
         handleUpdateSystems(dt);
@@ -74,7 +73,6 @@ void Game::run() {
 
 void Game::webRun() {
     float dt = GetFrameTime();
-    m_threadPool.awaitCompletion();
     handleInputSystems();
     handleUpdateSystems(dt);
     handleRenderSystems();

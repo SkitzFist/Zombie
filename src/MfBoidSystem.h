@@ -95,10 +95,10 @@ inline void calcAlignmentSSE(int id, SearchResult &searchResult, SpeedComponent 
     __m128 velX = _mm_setzero_ps();
     __m128 velY = _mm_setzero_ps();
 
-    float finalAlignmentX = -speeds.velX[id];
-    float finalAlignmentY = -speeds.velY[id];
+    float finalAlignmentX = 0.f;
+    float finalAlignmentY = 0.f;
 
-    int count = -1;
+    int count = 0;
 
     int i = 0;
     for (; i + 3 < searchResult.size; i += 4) {
@@ -137,7 +137,7 @@ inline void calcAlignmentSSE(int id, SearchResult &searchResult, SpeedComponent 
     finalAlignmentX /= count;
     finalAlignmentY /= count;
 
-    const float alignmentForce = 0.35f;
+    const float alignmentForce = 0.1f; // 0.00035f;
     finalAlignmentX *= alignmentForce;
     finalAlignmentY *= alignmentForce;
 
@@ -183,9 +183,11 @@ inline void calculateAlignments(SearchResult &alignSearch,
     float alignSize = 15.f;
     alignArea.width = entityRadius * alignSize;
     alignArea.height = entityRadius * alignSize;
+
     for (int i = startIndex; i < (startIndex + length); ++i) {
         alignArea.x = positions.xPos[i] - ((alignArea.width / 2.f) - entityRadius);
         alignArea.y = positions.yPos[i] - ((alignArea.height / 2.f) - entityRadius);
+
         alignSearch.clear();
         quadTree.search(alignArea, positions, alignSearch, entityRadius);
 
@@ -430,16 +432,20 @@ inline void calcCohesions(
 }
 
 inline void addForces(int startIndex, int length, SpeedComponent &speeds, BoidComponent &boids) {
+    Vector2 alignment;
+    Vector2 seperation;
+    Vector2 cohesion;
+    Vector2 acceleration;
+    float maxAcc = 1.f;
     for (int i = startIndex; i < (startIndex + length); ++i) {
-        Vector2 alignment = boids.alignments[i];
-        Vector2 seperation = boids.separations[i];
-        Vector2 cohesion = boids.cohesions[i];
+        alignment = boids.alignments[i];
+        seperation = boids.separations[i];
+        cohesion = boids.cohesions[i];
 
-        Vector2 acceleration = {
+        acceleration = {
             alignment.x + seperation.x + cohesion.x,
             alignment.y + seperation.y + cohesion.y};
 
-        float maxAcc = 5.f;
         acceleration.x = MathHack::clamp(acceleration.x, -maxAcc, maxAcc);
         acceleration.y = MathHack::clamp(acceleration.y, -maxAcc, maxAcc);
 

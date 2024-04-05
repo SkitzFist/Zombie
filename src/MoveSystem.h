@@ -47,28 +47,21 @@ inline void moveY(int startIndex, int length, PositionComponent &positions, Spee
 inline constexpr const float MAX_VEL = 5.f;
 
 inline void updateVelX(int startIndex, int length, SpeedComponent &speeds) {
-    // Define max and min velocity as __m128 vectors
     __m128 maxVel = _mm_set1_ps(MAX_VEL);
     __m128 minVel = _mm_set1_ps(-MAX_VEL);
 
     int i = startIndex;
-    // Process in chunks of 4 floats since SSE can handle 4 floats at a time
     for (; i + 3 < (startIndex + length); i += 4) {
-        // Load 4 velocity and acceleration elements from the arrays
         __m128 velX = _mm_loadu_ps(&speeds.velX[i]);
         __m128 accX = _mm_loadu_ps(&speeds.accX[i]);
 
-        // Add acceleration to velocity
         __m128 updatedVelX = _mm_add_ps(velX, accX);
 
-        // Clamp the updated velocities to the max and min values
         updatedVelX = _mm_max_ps(minVel, _mm_min_ps(maxVel, updatedVelX));
 
-        // Store the clamped velocities back into the array
         _mm_storeu_ps(&speeds.velX[i], updatedVelX);
     }
 
-    // Process any remaining elements that don't fit into a vector of 4
     for (; i < (startIndex + length); ++i) {
         speeds.velX[i] += speeds.accX[i];
         speeds.velX[i] = MathHack::clamp(speeds.velX[i], -MAX_VEL, MAX_VEL);
@@ -80,7 +73,7 @@ inline void updateVelY(int startIndex, int length, SpeedComponent &speeds) {
     __m128 minVel = _mm_set1_ps(-MAX_VEL);
 
     int i = startIndex;
-    for (; i + 3 < (startIndex + length); i += 3) {
+    for (; i + 3 < (startIndex + length); i += 4) {
         __m128 velY = _mm_loadu_ps(&speeds.velY[i]);
         __m128 accY = _mm_loadu_ps(&speeds.accY[i]);
 
@@ -89,6 +82,11 @@ inline void updateVelY(int startIndex, int length, SpeedComponent &speeds) {
         updatedVelY = _mm_max_ps(minVel, _mm_min_ps(maxVel, updatedVelY));
 
         _mm_storeu_ps(&speeds.velY[i], updatedVelY);
+    }
+
+    for (; i < (startIndex + length); ++i) {
+        speeds.velY[i] += speeds.accY[i];
+        speeds.velY[i] = MathHack::clamp(speeds.velX[i], -MAX_VEL, MAX_VEL);
     }
 }
 
@@ -111,13 +109,13 @@ struct MoveSystem {
 
         startIndex = 0;
         for (int i = 0; i < numberOfThreads; ++i) {
-            threadPool.enqueue(moveX, startIndex, length, std::ref(positions), std::ref(speeds));
+            threadPool.enqueue(updateVelY, startIndex, length, std::ref(speeds));
             startIndex += length;
         }
 
         startIndex = 0;
         for (int i = 0; i < numberOfThreads; ++i) {
-            threadPool.enqueue(updateVelY, startIndex, length, std::ref(speeds));
+            threadPool.enqueue(moveX, startIndex, length, std::ref(positions), std::ref(speeds));
             startIndex += length;
         }
 
