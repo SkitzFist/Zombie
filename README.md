@@ -1,5 +1,10 @@
 # Zombie
 
+As github does not easily let me change Cross-Origin-Embedder-Policy and Cross-Origin-Opener-Policy,
+and that inherntly disables SharedArrayBuffers which the project is dependent on. I had to host the simulation
+on itch.io : https://skitzfist.itch.io/web-boids
+
+# BUILD
 
 ## Build and run for desktop (windows)
 Stand in the root directory, this will create a "build" folder.  
