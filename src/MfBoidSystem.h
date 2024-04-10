@@ -461,10 +461,10 @@ inline void addForces(int startIndex, int length, SpeedComponent &speeds, BoidCo
 }
 
 struct MfBoidSystem {
-    bool isEnabled = false;
-    bool alignmentEnabled = false;
-    bool separationEnabled = false;
-    bool cohesionEnabled = false;
+    bool isEnabled = true;
+    bool alignmentEnabled = true;
+    bool separationEnabled = true;
+    bool cohesionEnabled = true;
 
     SearchResult alignSearch[16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
     SearchResult separationSearch[16] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};

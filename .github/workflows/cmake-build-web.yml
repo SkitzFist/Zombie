@@ -33,7 +33,7 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build
 
-    - run: mv ${{github.workspace}}/build/asteroids-jam.html ${{github.workspace}}/build/index.html
+    - run: mv ${{github.workspace}}/build/zombie.html ${{github.workspace}}/build/index.html
 
     - uses: actions/upload-artifact@v3
       with:
